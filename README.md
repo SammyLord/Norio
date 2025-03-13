@@ -7,7 +7,6 @@ Norio is a WebKit-based browser for Apple platforms (macOS, iOS, and iPadOS) tha
 - WebKit rendering engine for fast and efficient browsing
 - Support for Chrome extensions
 - Support for Firefox extensions
-- Seamless synchronization across Apple devices
 - Modern, clean user interface
 - Privacy-focused features
 
@@ -33,6 +32,57 @@ The browser is built on the following components:
 2. Open `Norio.xcodeproj` in Xcode
 3. Select the appropriate target (macOS, iOS, or iPadOS)
 4. Build and run
+
+## Command-Line Build Instructions
+
+You can also build Norio Browser from the command line using `xcodebuild`:
+
+### Prerequisites
+
+- Xcode Command Line Tools: Install with `xcode-select --install`
+- CocoaPods (if used): Install with `sudo gem install cocoapods`
+
+### Building for macOS
+
+```bash
+# Debug build
+xcodebuild -project Norio.xcodeproj -scheme "Norio macOS" -configuration Debug build
+
+# Release build
+xcodebuild -project Norio.xcodeproj -scheme "Norio macOS" -configuration Release build
+```
+
+### Building for iOS
+
+```bash
+# Debug build for simulator
+xcodebuild -project Norio.xcodeproj -scheme "Norio iOS" -configuration Debug -sdk iphonesimulator build
+
+# Release build for device (requires signing)
+xcodebuild -project Norio.xcodeproj -scheme "Norio iOS" -configuration Release -sdk iphoneos build
+```
+
+### Building for iPadOS
+
+```bash
+# Debug build for simulator
+xcodebuild -project Norio.xcodeproj -scheme "Norio iPadOS" -configuration Debug -sdk iphonesimulator build
+
+# Release build for device (requires signing)
+xcodebuild -project Norio.xcodeproj -scheme "Norio iPadOS" -configuration Release -sdk iphoneos build
+```
+
+### Running Tests
+
+```bash
+xcodebuild -project Norio.xcodeproj -scheme "Norio macOS" test
+```
+
+### Creating an Archive
+
+```bash
+xcodebuild -project Norio.xcodeproj -scheme "Norio macOS" archive -archivePath ./build/Norio.xcarchive
+```
 
 ## License
 
