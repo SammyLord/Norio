@@ -1,449 +1,589 @@
 import Foundation
 import WebKit
+import Combine
 import NorioCore
 
 public class ExtensionManager {
     public static let shared = ExtensionManager()
     
-    private var installedExtensions: [Extension] = []
-    
-    // Store URLs
+    // Base URLs for extension stores
     public static let chromeWebStoreBaseURL = "https://chrome.google.com/webstore/detail/"
     public static let firefoxAddonsBaseURL = "https://addons.mozilla.org/en-US/firefox/addon/"
     
-    private init() {
-        loadInstalledExtensions()
-        
-        // Add some sample extensions for testing
-        if installedExtensions.isEmpty {
-            addSampleExtensions()
-        }
-    }
-    
-    // Extension representation
-    public struct Extension: Codable, Identifiable {
-        public let id: String
-        public let name: String
-        public let version: String
-        public let description: String
-        public let type: ExtensionType
-        public let enabled: Bool
-        public let manifestPath: URL
-        public let iconPath: URL?
-        public let storeURL: URL?
-        
-        public init(id: String, name: String, version: String, description: String, type: ExtensionType, enabled: Bool = true, manifestPath: URL, iconPath: URL? = nil, storeURL: URL? = nil) {
-            self.id = id
-            self.name = name
-            self.version = version
-            self.description = description
-            self.type = type
-            self.enabled = enabled
-            self.manifestPath = manifestPath
-            self.iconPath = iconPath
-            self.storeURL = storeURL
-        }
-    }
-    
+    // Extension types
     public enum ExtensionType: String, Codable {
         case chrome
         case firefox
     }
     
-    // Get all installed extensions
+    // Extension data model
+    public struct Extension: Identifiable, Codable {
+        public let id: String
+        public let name: String
+        public let description: String
+        public let version: String
+        public let type: ExtensionType
+        public var enabled: Bool
+        public let manifestJson: [String: Any]
+        public let entryPoints: [String]?
+        public let contentScripts: [ContentScript]
+        public let permissions: [String]
+        public let optionalPermissions: [String]
+        public let installDate: Date
+        
+        public init(id: String, name: String, description: String, version: String, type: ExtensionType, 
+                   enabled: Bool = true, manifestJson: [String: Any], entryPoints: [String]?, contentScripts: [ContentScript],
+                   permissions: [String], optionalPermissions: [String]) {
+            self.id = id
+            self.name = name
+            self.description = description
+            self.version = version
+            self.type = type
+            self.enabled = enabled
+            self.manifestJson = manifestJson
+            self.entryPoints = entryPoints
+            self.contentScripts = contentScripts
+            self.permissions = permissions
+            self.optionalPermissions = optionalPermissions
+            self.installDate = Date()
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case id, name, description, version, type, enabled, manifestJson, entryPoints,
+                 contentScripts, permissions, optionalPermissions, installDate
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(String.self, forKey: .id)
+            name = try container.decode(String.self, forKey: .name)
+            description = try container.decode(String.self, forKey: .description)
+            version = try container.decode(String.self, forKey: .version)
+            type = try container.decode(ExtensionType.self, forKey: .type)
+            enabled = try container.decode(Bool.self, forKey: .enabled)
+            
+            // Decode the manifest JSON from a Data object
+            let manifestData = try container.decode(Data.self, forKey: .manifestJson)
+            if let json = try JSONSerialization.jsonObject(with: manifestData) as? [String: Any] {
+                manifestJson = json
+            } else {
+                manifestJson = [:]
+            }
+            
+            entryPoints = try container.decodeIfPresent([String].self, forKey: .entryPoints)
+            contentScripts = try container.decode([ContentScript].self, forKey: .contentScripts)
+            permissions = try container.decode([String].self, forKey: .permissions)
+            optionalPermissions = try container.decode([String].self, forKey: .optionalPermissions)
+            installDate = try container.decode(Date.self, forKey: .installDate)
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(id, forKey: .id)
+            try container.encode(name, forKey: .name)
+            try container.encode(description, forKey: .description)
+            try container.encode(version, forKey: .version)
+            try container.encode(type, forKey: .type)
+            try container.encode(enabled, forKey: .enabled)
+            
+            // Encode the manifest JSON to a Data object
+            let manifestData = try JSONSerialization.data(withJSONObject: manifestJson)
+            try container.encode(manifestData, forKey: .manifestJson)
+            
+            try container.encodeIfPresent(entryPoints, forKey: .entryPoints)
+            try container.encode(contentScripts, forKey: .contentScripts)
+            try container.encode(permissions, forKey: .permissions)
+            try container.encode(optionalPermissions, forKey: .optionalPermissions)
+            try container.encode(installDate, forKey: .installDate)
+        }
+    }
+    
+    // Content script model
+    public struct ContentScript: Codable {
+        public let js: [String]
+        public let css: [String]
+        public let matches: [String]
+        public let runAt: RunAt
+        
+        public enum RunAt: String, Codable {
+            case documentStart = "document_start"
+            case documentEnd = "document_end"
+            case documentIdle = "document_idle"
+        }
+    }
+    
+    // Private properties
+    private var installedExtensions: [Extension] = []
+    private let extensionsDirectory: URL
+    private var extensionObservers = Set<AnyCancellable>()
+    private let notificationCenter = NotificationCenter.default
+    
+    // Public notifications
+    public static let extensionsUpdatedNotification = Notification.Name("ExtensionManagerExtensionsUpdated")
+    
+    // Private initializer
+    private init() {
+        // Create the extensions directory if it doesn't exist
+        let fileManager = FileManager.default
+        let appSupportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let norioDirectory = appSupportDirectory.appendingPathComponent("Norio", isDirectory: true)
+        extensionsDirectory = norioDirectory.appendingPathComponent("Extensions", isDirectory: true)
+        
+        try? fileManager.createDirectory(at: extensionsDirectory, withIntermediateDirectories: true)
+        
+        // Load installed extensions
+        loadInstalledExtensions()
+    }
+    
+    // MARK: - Public Methods
+    
+    /// Returns a list of all installed extensions
     public func getInstalledExtensions() -> [Extension] {
         return installedExtensions
     }
     
-    // Add sample extensions for testing
-    private func addSampleExtensions() {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        
-        let chromeExtension1 = Extension(
-            id: "aapbdbdomjkkjkaonfhkkikfgjllcleb",
-            name: "Google Translate",
-            version: "1.0.0",
-            description: "View translations easily as you browse the web.",
-            type: .chrome,
-            enabled: true,
-            manifestPath: documentsDirectory,
-            iconPath: nil,
-            storeURL: URL(string: "\(Self.chromeWebStoreBaseURL)aapbdbdomjkkjkaonfhkkikfgjllcleb")
-        )
-        
-        let chromeExtension2 = Extension(
-            id: "gcbommkclmclpchllfjekcdonpmejbdp",
-            name: "HTTPS Everywhere",
-            version: "2.0.1",
-            description: "Encrypt the web! Automatically use HTTPS security on many sites.",
-            type: .chrome,
-            enabled: true,
-            manifestPath: documentsDirectory,
-            iconPath: nil,
-            storeURL: URL(string: "\(Self.chromeWebStoreBaseURL)gcbommkclmclpchllfjekcdonpmejbdp")
-        )
-        
-        let firefoxExtension = Extension(
-            id: "ublock-origin@mozilla.org",
-            name: "uBlock Origin",
-            version: "1.41.8",
-            description: "Finally, an efficient blocker. Easy on CPU and memory.",
-            type: .firefox,
-            enabled: true,
-            manifestPath: documentsDirectory,
-            iconPath: nil,
-            storeURL: URL(string: "\(Self.firefoxAddonsBaseURL)ublock-origin")
-        )
-        
-        installedExtensions.append(chromeExtension1)
-        installedExtensions.append(chromeExtension2)
-        installedExtensions.append(firefoxExtension)
-    }
-    
-    // Load all installed extensions
-    private func loadInstalledExtensions() {
-        // Load from user defaults or file system
-        let extensionsDirectory = getExtensionsDirectory()
-        
-        // Check if directory exists, if not create it
-        if !FileManager.default.fileExists(atPath: extensionsDirectory.path) {
-            try? FileManager.default.createDirectory(at: extensionsDirectory, withIntermediateDirectories: true)
-        }
-        
-        // Load Chrome extensions
-        let chromeExtensionsDirectory = extensionsDirectory.appendingPathComponent("Chrome")
-        if !FileManager.default.fileExists(atPath: chromeExtensionsDirectory.path) {
-            try? FileManager.default.createDirectory(at: chromeExtensionsDirectory, withIntermediateDirectories: true)
-        }
-        
-        // Load Firefox extensions
-        let firefoxExtensionsDirectory = extensionsDirectory.appendingPathComponent("Firefox")
-        if !FileManager.default.fileExists(atPath: firefoxExtensionsDirectory.path) {
-            try? FileManager.default.createDirectory(at: firefoxExtensionsDirectory, withIntermediateDirectories: true)
-        }
-        
-        // TODO: Implement actual loading of extension manifests from directories
-    }
-    
-    // Get the directory where extensions are stored
-    private func getExtensionsDirectory() -> URL {
-        let applicationSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return applicationSupportDirectory.appendingPathComponent("Norio").appendingPathComponent("Extensions")
-    }
-    
-    // Install a Chrome extension
-    public func installChromeExtension(from url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
-        // TODO: Implement actual Chrome extension installation
-        // 1. Download the .crx file
-        // 2. Extract the contents
-        // 3. Parse the manifest.json
-        // 4. Create an Extension object
-        // 5. Add to installed extensions
-        completion(.failure(NSError(domain: "ExtensionManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Chrome extension installation not implemented yet"])))
-    }
-    
-    // Install a Firefox extension
-    public func installFirefoxExtension(from url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
-        // TODO: Implement actual Firefox extension installation
-        // 1. Download the .xpi file
-        // 2. Extract the contents
-        // 3. Parse the manifest.json
-        // 4. Create an Extension object
-        // 5. Add to installed extensions
-        completion(.failure(NSError(domain: "ExtensionManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Firefox extension installation not implemented yet"])))
-    }
-    
-    // Enable or disable an extension
+    /// Enables or disables an extension
     public func setExtensionEnabled(_ extensionId: String, enabled: Bool) {
-        if let index = installedExtensions.firstIndex(where: { $0.id == extensionId }) {
-            let ext = installedExtensions[index]
-            installedExtensions[index] = Extension(
-                id: ext.id,
-                name: ext.name,
-                version: ext.version,
-                description: ext.description,
-                type: ext.type,
-                enabled: enabled,
-                manifestPath: ext.manifestPath,
-                iconPath: ext.iconPath,
-                storeURL: ext.storeURL
-            )
-            
-            // Save changes
-            saveInstalledExtensions()
-        }
-    }
-    
-    // Remove an extension
-    public func removeExtension(_ extensionId: String) {
-        installedExtensions.removeAll { $0.id == extensionId }
+        guard let index = installedExtensions.firstIndex(where: { $0.id == extensionId }) else { return }
         
-        // TODO: Remove extension files from disk
+        installedExtensions[index].enabled = enabled
         
         // Save changes
         saveInstalledExtensions()
+        
+        // Notify observers
+        notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
     }
     
-    // Save installed extensions to disk
-    private func saveInstalledExtensions() {
-        // TODO: Implement saving to user defaults or file system
+    /// Removes an extension
+    public func removeExtension(_ extensionId: String) {
+        guard let index = installedExtensions.firstIndex(where: { $0.id == extensionId }) else { return }
+        
+        // Save the name before removal
+        let extensionName = installedExtensions[index].name
+        
+        // Get the extension directory
+        let extensionDirectory = extensionsDirectory.appendingPathComponent(extensionId, isDirectory: true)
+        
+        // Remove the extension files
+        try? FileManager.default.removeItem(at: extensionDirectory)
+        
+        // Remove from the list
+        installedExtensions.remove(at: index)
+        
+        // Save changes
+        saveInstalledExtensions()
+        
+        // Notify observers
+        notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
+        
+        // Show notification
+        NotificationManager.shared.showExtensionRemoved(name: extensionName)
     }
     
-    // Apply extensions to a WebView
-    public func applyExtensionsToWebView(_ webView: WKWebView) {
-        for ext in installedExtensions where ext.enabled {
-            applyExtension(ext, to: webView)
-        }
-    }
-    
-    // Apply a single extension to a WebView
-    private func applyExtension(_ extension: Extension, to webView: WKWebView) {
-        switch `extension`.type {
-        case .chrome:
-            applyChromeExtension(`extension`, to: webView)
-        case .firefox:
-            applyFirefoxExtension(`extension`, to: webView)
-        }
-    }
-    
-    // Apply a Chrome extension
-    private func applyChromeExtension(_ extension: Extension, to webView: WKWebView) {
-        // TODO: Implement Chrome extension application logic
-        // 1. Read the manifest.json
-        // 2. Load content scripts
-        // 3. Inject appropriate scripts based on URL patterns
-    }
-    
-    // Apply a Firefox extension
-    private func applyFirefoxExtension(_ extension: Extension, to webView: WKWebView) {
-        // TODO: Implement Firefox extension application logic
-        // 1. Read the manifest.json
-        // 2. Load content scripts
-        // 3. Inject appropriate scripts based on URL patterns
-    }
-    
-    // Run an extension action
+    /// Runs an extension action
     public func runExtensionAction(_ extension: Extension) {
-        // This would typically open the extension's popup or execute its default action
-        print("Running extension action for: \(`extension`.name)")
-        // In a real implementation, this would show the extension's popup UI or execute its action
+        guard `extension`.enabled else { return }
+        
+        // In a real implementation, this would trigger the extension's background page or action
+        Logger.shared.log("Running extension action: \(`extension`.name)")
+        
+        // For now, just show a notification that the extension was triggered
+        NotificationManager.shared.showNotification(
+            title: "Extension Action",
+            message: "Triggered \(`extension`.name)"
+        )
     }
     
-    // MARK: - Web Store Installation
+    /// Applies extensions to a WebView
+    public func applyExtensionsToWebView(_ webView: WKWebView) {
+        // Only apply enabled extensions
+        let enabledExtensions = installedExtensions.filter { $0.enabled }
+        
+        for ext in enabledExtensions {
+            applyExtension(ext, toWebView: webView)
+        }
+    }
     
-    /// Install an extension from Chrome Web Store by its ID
+    // MARK: - Chrome Extension Installation
+    
+    /// Installs a Chrome extension from a URL
+    public func installChromeExtension(from url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
+        // For Chrome extensions, we expect a .crx file
+        guard url.pathExtension.lowercased() == "crx" else {
+            completion(.failure(ExtensionError.invalidFileFormat("Expected .crx file")))
+            return
+        }
+        
+        // Download the extension file
+        URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
+            
+            guard let tempURL = tempURL else {
+                DispatchQueue.main.async {
+                    completion(.failure(ExtensionError.downloadFailed))
+                }
+                return
+            }
+            
+            // Process the .crx file
+            self.processChromeExtension(tempURL) { result in
+                DispatchQueue.main.async {
+                    completion(result)
+                }
+            }
+        }.resume()
+    }
+    
+    /// Installs a Chrome extension from the Chrome Web Store
     public func installChromeExtensionFromStore(id: String, completion: @escaping (Result<Extension, Error>) -> Void) {
-        let storeURL = URL(string: "\(Self.chromeWebStoreBaseURL)\(id)")!
+        // In a real implementation, this would fetch the extension from the Chrome Web Store
+        // For this demo, we'll create a simulated extension
         
-        // First fetch extension metadata
-        fetchChromeExtensionMetadata(id: id) { [weak self] result in
-            switch result {
-            case .success(let metadata):
-                // Then download the extension file
-                self?.downloadChromeExtension(id: id, metadata: metadata, completion: completion)
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    /// Install an extension from Firefox Add-ons by its ID
-    public func installFirefoxExtensionFromStore(id: String, completion: @escaping (Result<Extension, Error>) -> Void) {
-        let storeURL = URL(string: "\(Self.firefoxAddonsBaseURL)\(id)")!
+        let extensionDir = extensionsDirectory.appendingPathComponent(id, isDirectory: true)
         
-        // First fetch extension metadata
-        fetchFirefoxExtensionMetadata(id: id) { [weak self] result in
-            switch result {
-            case .success(let metadata):
-                // Then download the extension file
-                self?.downloadFirefoxExtension(id: id, metadata: metadata, completion: completion)
-            case .failure(let error):
-                completion(.failure(error))
-            }
-        }
-    }
-    
-    // Fetch metadata for a Chrome extension
-    private func fetchChromeExtensionMetadata(id: String, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // In a real implementation, we would use Chrome Web Store API or scrape the page
-        // For this demo, we'll simulate the metadata fetch
-        let metadata: [String: Any] = [
-            "name": "Chrome Extension \(id)",
+        // Create directory for this extension
+        try? FileManager.default.createDirectory(at: extensionDir, withIntermediateDirectories: true)
+        
+        // Create a simulated manifest.json
+        let manifestDict: [String: Any] = [
+            "name": "Chrome Extension \(id.prefix(6))",
+            "description": "A simulated Chrome extension",
             "version": "1.0.0",
-            "description": "Extension from Chrome Web Store"
+            "manifest_version": 2,
+            "permissions": ["tabs", "storage"],
+            "content_scripts": [
+                [
+                    "matches": ["*://*/*"],
+                    "js": ["content.js"],
+                    "run_at": "document_end"
+                ]
+            ]
         ]
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            completion(.success(metadata))
+        // Write manifest.json
+        let manifestURL = extensionDir.appendingPathComponent("manifest.json")
+        if let manifestData = try? JSONSerialization.data(withJSONObject: manifestDict) {
+            try? manifestData.write(to: manifestURL)
         }
-    }
-    
-    // Fetch metadata for a Firefox extension
-    private func fetchFirefoxExtensionMetadata(id: String, completion: @escaping (Result<[String: Any], Error>) -> Void) {
-        // Firefox Add-ons has an API we can use: https://addons-server.readthedocs.io/en/latest/topics/api/addons.html
-        // For this demo, we'll simulate the metadata fetch
-        let metadata: [String: Any] = [
-            "name": "Firefox Add-on \(id)",
-            "version": "1.0.0",
-            "description": "Add-on from Firefox Add-ons"
-        ]
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            completion(.success(metadata))
-        }
-    }
-    
-    // Download a Chrome extension
-    private func downloadChromeExtension(id: String, metadata: [String: Any], completion: @escaping (Result<Extension, Error>) -> Void) {
-        // In a real implementation, we would download the .crx file
-        // For this demo, we'll simulate the download and installation
-        let name = metadata["name"] as? String ?? "Unknown"
-        let version = metadata["version"] as? String ?? "1.0.0"
-        let description = metadata["description"] as? String ?? "No description"
+        // Create a simple content script
+        let contentJS = """
+        // Content script for Chrome extension \(id)
+        console.log('Chrome extension \(id) injected');
+        document.body.style.border = '5px solid blue';
+        """
         
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let manifestPath = documentsDirectory.appendingPathComponent("\(id)/manifest.json")
-        let storeURL = URL(string: "\(Self.chromeWebStoreBaseURL)\(id)")
+        let contentJSURL = extensionDir.appendingPathComponent("content.js")
+        try? contentJS.write(to: contentJSURL, atomically: true, encoding: .utf8)
         
-        let extension = Extension(
+        // Create the Extension object
+        let contentScript = ContentScript(
+            js: ["content.js"],
+            css: [],
+            matches: ["*://*/*"],
+            runAt: .documentEnd
+        )
+        
+        let extensionName = "Chrome Extension \(id.prefix(6))"
+        let extensionObj = Extension(
             id: id,
-            name: name,
-            version: version,
-            description: description,
+            name: extensionName,
+            description: "A simulated Chrome extension",
+            version: "1.0.0",
             type: .chrome,
             enabled: true,
-            manifestPath: manifestPath,
-            iconPath: nil,
-            storeURL: storeURL
+            manifestJson: manifestDict,
+            entryPoints: nil,
+            contentScripts: [contentScript],
+            permissions: ["tabs", "storage"],
+            optionalPermissions: []
         )
         
         // Add to installed extensions
-        installedExtensions.append(extension)
-        saveInstalledExtensions()
+        self.installedExtensions.append(extensionObj)
+        self.saveInstalledExtensions()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            completion(.success(extension))
+        // Notify observers
+        self.notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
+        
+        // Show notification
+        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: .chrome)
+        
+        completion(.success(extensionObj))
+    }
+    
+    // MARK: - Firefox Extension Installation
+    
+    /// Installs a Firefox extension from a URL
+    public func installFirefoxExtension(from url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
+        // For Firefox extensions, we expect a .xpi file
+        guard url.pathExtension.lowercased() == "xpi" else {
+            completion(.failure(ExtensionError.invalidFileFormat("Expected .xpi file")))
+            return
+        }
+        
+        // Download the extension file
+        URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
+            
+            guard let tempURL = tempURL else {
+                DispatchQueue.main.async {
+                    completion(.failure(ExtensionError.downloadFailed))
+                }
+                return
+            }
+            
+            // Process the .xpi file
+            self.processFirefoxExtension(tempURL) { result in
+                DispatchQueue.main.async {
+                    completion(result)
+                }
+            }
+        }.resume()
+    }
+    
+    /// Installs a Firefox extension from the Firefox Add-ons site
+    public func installFirefoxExtensionFromStore(id: String, completion: @escaping (Result<Extension, Error>) -> Void) {
+        // In a real implementation, this would fetch the extension from the Firefox Add-ons site
+        // For this demo, we'll create a simulated extension
+        
+        let extensionDir = extensionsDirectory.appendingPathComponent(id, isDirectory: true)
+        
+        // Create directory for this extension
+        try? FileManager.default.createDirectory(at: extensionDir, withIntermediateDirectories: true)
+        
+        // Create a simulated manifest.json
+        let manifestDict: [String: Any] = [
+            "name": "Firefox Add-on \(id)",
+            "description": "A simulated Firefox add-on",
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "permissions": ["tabs", "storage"],
+            "content_scripts": [
+                [
+                    "matches": ["*://*/*"],
+                    "js": ["content.js"],
+                    "run_at": "document_end"
+                ]
+            ]
+        ]
+        
+        // Write manifest.json
+        let manifestURL = extensionDir.appendingPathComponent("manifest.json")
+        if let manifestData = try? JSONSerialization.data(withJSONObject: manifestDict) {
+            try? manifestData.write(to: manifestURL)
+        }
+        
+        // Create a simple content script
+        let contentJS = """
+        // Content script for Firefox add-on \(id)
+        console.log('Firefox add-on \(id) injected');
+        document.body.style.border = '5px solid orange';
+        """
+        
+        let contentJSURL = extensionDir.appendingPathComponent("content.js")
+        try? contentJS.write(to: contentJSURL, atomically: true, encoding: .utf8)
+        
+        // Create the Extension object
+        let contentScript = ContentScript(
+            js: ["content.js"],
+            css: [],
+            matches: ["*://*/*"],
+            runAt: .documentEnd
+        )
+        
+        let extensionName = "Firefox Add-on \(id)"
+        let extensionObj = Extension(
+            id: id,
+            name: extensionName,
+            description: "A simulated Firefox add-on",
+            version: "1.0.0",
+            type: .firefox,
+            enabled: true,
+            manifestJson: manifestDict,
+            entryPoints: nil,
+            contentScripts: [contentScript],
+            permissions: ["tabs", "storage"],
+            optionalPermissions: []
+        )
+        
+        // Add to installed extensions
+        self.installedExtensions.append(extensionObj)
+        self.saveInstalledExtensions()
+        
+        // Notify observers
+        self.notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
+        
+        // Show notification
+        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: .firefox)
+        
+        completion(.success(extensionObj))
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Loads installed extensions from disk
+    private func loadInstalledExtensions() {
+        let extensionsDataURL = extensionsDirectory.appendingPathComponent("extensions.json")
+        
+        if let data = try? Data(contentsOf: extensionsDataURL),
+           let extensions = try? JSONDecoder().decode([Extension].self, from: data) {
+            installedExtensions = extensions
         }
     }
     
-    // Download a Firefox extension
-    private func downloadFirefoxExtension(id: String, metadata: [String: Any], completion: @escaping (Result<Extension, Error>) -> Void) {
-        // In a real implementation, we would download the .xpi file
-        // For this demo, we'll simulate the download and installation
-        let name = metadata["name"] as? String ?? "Unknown"
-        let version = metadata["version"] as? String ?? "1.0.0"
-        let description = metadata["description"] as? String ?? "No description"
+    /// Saves installed extensions to disk
+    private func saveInstalledExtensions() {
+        let extensionsDataURL = extensionsDirectory.appendingPathComponent("extensions.json")
         
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let manifestPath = documentsDirectory.appendingPathComponent("\(id)/manifest.json")
-        let storeURL = URL(string: "\(Self.firefoxAddonsBaseURL)\(id)")
+        if let data = try? JSONEncoder().encode(installedExtensions) {
+            try? data.write(to: extensionsDataURL)
+        }
+    }
+    
+    /// Processes a Chrome extension file
+    private func processChromeExtension(_ url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
+        // In a real implementation, this would extract the .crx file and parse the manifest
+        // For this demo, we'll just simulate success
         
-        let extension = Extension(
+        let id = UUID().uuidString
+        let extensionObj = Extension(
             id: id,
-            name: name,
-            version: version,
-            description: description,
-            type: .firefox,
+            name: "Chrome Extension",
+            description: "A Chrome extension",
+            version: "1.0.0",
+            type: .chrome,
             enabled: true,
-            manifestPath: manifestPath,
-            iconPath: nil,
-            storeURL: storeURL
+            manifestJson: [:],
+            entryPoints: nil,
+            contentScripts: [],
+            permissions: [],
+            optionalPermissions: []
         )
         
         // Add to installed extensions
-        installedExtensions.append(extension)
+        installedExtensions.append(extensionObj)
         saveInstalledExtensions()
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            completion(.success(extension))
+        // Notify observers
+        notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
+        
+        completion(.success(extensionObj))
+    }
+    
+    /// Processes a Firefox extension file
+    private func processFirefoxExtension(_ url: URL, completion: @escaping (Result<Extension, Error>) -> Void) {
+        // In a real implementation, this would extract the .xpi file and parse the manifest
+        // For this demo, we'll just simulate success
+        
+        let id = UUID().uuidString
+        let extensionObj = Extension(
+            id: id,
+            name: "Firefox Add-on",
+            description: "A Firefox add-on",
+            version: "1.0.0",
+            type: .firefox,
+            enabled: true,
+            manifestJson: [:],
+            entryPoints: nil,
+            contentScripts: [],
+            permissions: [],
+            optionalPermissions: []
+        )
+        
+        // Add to installed extensions
+        installedExtensions.append(extensionObj)
+        saveInstalledExtensions()
+        
+        // Notify observers
+        notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
+        
+        completion(.success(extensionObj))
+    }
+    
+    /// Applies an extension to a WebView
+    private func applyExtension(_ extension: Extension, toWebView webView: WKWebView) {
+        guard `extension`.enabled else { return }
+        
+        // Apply content scripts
+        for contentScript in `extension`.contentScripts {
+            applyContentScript(contentScript, from: `extension`, toWebView: webView)
+        }
+    }
+    
+    /// Applies a content script to a WebView
+    private func applyContentScript(_ contentScript: ContentScript, from extension: Extension, toWebView webView: WKWebView) {
+        // Get the extension directory
+        let extensionDirectory = extensionsDirectory.appendingPathComponent(`extension`.id, isDirectory: true)
+        
+        // Add JavaScript files
+        for jsFile in contentScript.js {
+            let jsURL = extensionDirectory.appendingPathComponent(jsFile)
+            
+            if let jsContent = try? String(contentsOf: jsURL) {
+                let userScript = WKUserScript(
+                    source: jsContent,
+                    injectionTime: contentScriptInjectionTime(contentScript.runAt),
+                    forMainFrameOnly: false
+                )
+                
+                webView.configuration.userContentController.addUserScript(userScript)
+            }
+        }
+        
+        // Add CSS files
+        for cssFile in contentScript.css {
+            let cssURL = extensionDirectory.appendingPathComponent(cssFile)
+            
+            if let cssContent = try? String(contentsOf: cssURL) {
+                // Wrap CSS in JavaScript that injects it
+                let jsWrapper = """
+                (function() {
+                    var style = document.createElement('style');
+                    style.textContent = `\(cssContent)`;
+                    document.head.appendChild(style);
+                })();
+                """
+                
+                let userScript = WKUserScript(
+                    source: jsWrapper,
+                    injectionTime: contentScriptInjectionTime(contentScript.runAt),
+                    forMainFrameOnly: false
+                )
+                
+                webView.configuration.userContentController.addUserScript(userScript)
+            }
+        }
+    }
+    
+    /// Converts a content script run_at value to a WKUserScriptInjectionTime
+    private func contentScriptInjectionTime(_ runAt: ContentScript.RunAt) -> WKUserScriptInjectionTime {
+        switch runAt {
+        case .documentStart:
+            return .atDocumentStart
+        case .documentEnd, .documentIdle:
+            return .atDocumentEnd
         }
     }
 }
 
-// Chrome extension manifest parser
-extension ExtensionManager {
-    struct ChromeManifest: Codable {
-        let name: String
-        let version: String
-        let description: String?
-        let permissions: [String]?
-        let background: Background?
-        let contentScripts: [ContentScript]?
-        let browserAction: BrowserAction?
-        
-        enum CodingKeys: String, CodingKey {
-            case name, version, description, permissions, background
-            case contentScripts = "content_scripts"
-            case browserAction = "browser_action"
-        }
-        
-        struct Background: Codable {
-            let scripts: [String]?
-            let page: String?
-        }
-        
-        struct ContentScript: Codable {
-            let matches: [String]
-            let js: [String]?
-            let css: [String]?
-            let runAt: String?
-            
-            enum CodingKeys: String, CodingKey {
-                case matches
-                case js = "js"
-                case css = "css"
-                case runAt = "run_at"
-            }
-        }
-        
-        struct BrowserAction: Codable {
-            let default_icon: [String: String]?
-            let default_title: String?
-            let default_popup: String?
-        }
-    }
-}
-
-// Firefox extension manifest parser
-extension ExtensionManager {
-    struct FirefoxManifest: Codable {
-        let name: String
-        let version: String
-        let description: String?
-        let permissions: [String]?
-        let background: Background?
-        let contentScripts: [ContentScript]?
-        let browserAction: BrowserAction?
-        
-        enum CodingKeys: String, CodingKey {
-            case name, version, description, permissions, background
-            case contentScripts = "content_scripts"
-            case browserAction = "browser_action"
-        }
-        
-        struct Background: Codable {
-            let scripts: [String]?
-            let page: String?
-        }
-        
-        struct ContentScript: Codable {
-            let matches: [String]
-            let js: [String]?
-            let css: [String]?
-            let runAt: String?
-            
-            enum CodingKeys: String, CodingKey {
-                case matches
-                case js = "js"
-                case css = "css"
-                case runAt = "run_at"
-            }
-        }
-        
-        struct BrowserAction: Codable {
-            let default_icon: [String: String]?
-            let default_title: String?
-            let default_popup: String?
-        }
-    }
+// Extension errors
+enum ExtensionError: Error {
+    case invalidFileFormat(String)
+    case downloadFailed
+    case extractionFailed
+    case invalidManifest
+    case missingRequiredFields
+    case incompatibleExtension
 } 

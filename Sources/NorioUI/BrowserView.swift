@@ -28,6 +28,7 @@ public struct BrowserView: View {
                         .frame(width: 32, height: 32)
                 }
                 .disabled(tabManager.currentTab == nil)
+                .accessibilityIdentifier("backButton")
                 
                 // Forward button
                 Button(action: {
@@ -37,6 +38,7 @@ public struct BrowserView: View {
                         .frame(width: 32, height: 32)
                 }
                 .disabled(tabManager.currentTab == nil)
+                .accessibilityIdentifier("forwardButton")
                 
                 // Refresh button
                 Button(action: {
@@ -50,17 +52,21 @@ public struct BrowserView: View {
                         .frame(width: 32, height: 32)
                 }
                 .disabled(tabManager.currentTab == nil)
+                .accessibilityIdentifier("refreshButton")
                 
                 // Address bar
                 HStack {
                     Image(systemName: "lock.fill")
                         .foregroundColor(.green)
                         .font(.caption)
+                        .accessibilityIdentifier("secureIndicator")
                     
                     TextField("Search or enter website name", text: $urlString, onCommit: loadUrl)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .accessibilityIdentifier("addressBar")
                 }
                 .padding(.horizontal, 8)
+                .accessibilityIdentifier("addressBarContainer")
                 
                 // Settings button
                 Button(action: {
@@ -69,6 +75,7 @@ public struct BrowserView: View {
                     Image(systemName: "gear")
                         .frame(width: 32, height: 32)
                 }
+                .accessibilityIdentifier("settingsButton")
                 
                 // Extensions dropdown menu
                 ExtensionDropdownButton(
@@ -81,6 +88,7 @@ public struct BrowserView: View {
                         showExtensions = true
                     }
                 )
+                .accessibilityIdentifier("extensionsDropdownButton")
             }
             .padding(8)
             .background(Color(.systemBackground))
@@ -90,6 +98,7 @@ public struct BrowserView: View {
                     .foregroundColor(Color.gray.opacity(0.3)),
                 alignment: .bottom
             )
+            .accessibilityIdentifier("toolbarContainer")
             
             // Tab bar
             ScrollView(.horizontal, showsIndicators: false) {
@@ -100,6 +109,7 @@ public struct BrowserView: View {
                         } onClose: {
                             tabManager.closeTab(tab)
                         }
+                        .accessibilityIdentifier("tab-\(tab.id)")
                     }
                     
                     Button(action: {
@@ -110,7 +120,9 @@ public struct BrowserView: View {
                             .frame(width: 32)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .accessibilityIdentifier("newTabButton")
                 }
+                .accessibilityIdentifier("tabsContainer")
             }
             .frame(height: 36)
             .background(Color(.systemBackground))
@@ -120,6 +132,7 @@ public struct BrowserView: View {
                     .foregroundColor(Color.gray.opacity(0.3)),
                 alignment: .bottom
             )
+            .accessibilityIdentifier("tabBar")
             
             // Web content view
             WebViewContainer(tab: tabManager.currentTab) { tab, title, url, isLoading in
@@ -133,6 +146,7 @@ public struct BrowserView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("webViewContainer")
             
             // Status bar
             HStack {
@@ -140,12 +154,14 @@ public struct BrowserView: View {
                     Text(url.host ?? "")
                         .font(.footnote)
                         .foregroundColor(.gray)
+                        .accessibilityIdentifier("statusUrl")
                 }
                 Spacer()
             }
             .padding(.horizontal, 8)
             .frame(height: 24)
             .background(Color(.systemBackground))
+            .accessibilityIdentifier("statusBar")
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
@@ -318,6 +334,7 @@ private struct TabView: View {
                 .font(.footnote)
                 .lineLimit(1)
                 .padding(.leading, 8)
+                .accessibilityIdentifier("tabTitle")
             
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -326,6 +343,7 @@ private struct TabView: View {
             }
             .buttonStyle(PlainButtonStyle())
             .padding(.trailing, 8)
+            .accessibilityIdentifier("closeTabButton")
         }
         .frame(width: 180, height: 36)
         .background(isSelected ? Color(.systemGray5) : Color(.systemBackground))
@@ -333,6 +351,7 @@ private struct TabView: View {
         .onTapGesture {
             onSelect()
         }
+        .accessibilityIdentifier("tab-content-\(tab.id)")
     }
 }
 
@@ -354,10 +373,14 @@ private struct WebViewContainer: UIViewRepresentable {
     #if os(macOS)
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
+        view.accessibilityIdentifier = "webViewParent"
         if let tab = tab {
             tab.webView.frame = view.bounds
             tab.webView.autoresizingMask = [.width, .height]
             view.addSubview(tab.webView)
+            
+            // Set accessibility identifier for the WebView
+            tab.webView.accessibilityIdentifier = "webView-\(tab.id)"
             
             tab.webView.navigationDelegate = context.coordinator
             tab.webView.uiDelegate = context.coordinator
@@ -374,10 +397,14 @@ private struct WebViewContainer: UIViewRepresentable {
     #else
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
+        view.accessibilityIdentifier = "webViewParent"
         if let tab = tab {
             tab.webView.frame = view.bounds
             tab.webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             view.addSubview(tab.webView)
+            
+            // Set accessibility identifier for the WebView
+            tab.webView.accessibilityIdentifier = "webView-\(tab.id)"
             
             tab.webView.navigationDelegate = context.coordinator
             tab.webView.uiDelegate = context.coordinator
@@ -707,8 +734,11 @@ private struct SettingsView: View {
             List {
                 Section(header: Text("General")) {
                     Text("Homepage")
+                        .accessibilityIdentifier("homepageSetting")
                     Text("Search Engine")
+                        .accessibilityIdentifier("searchEngineSetting")
                     Text("Default Browser")
+                        .accessibilityIdentifier("defaultBrowserSetting")
                 }
                 
                 Section(header: Text("Privacy")) {
@@ -716,28 +746,36 @@ private struct SettingsView: View {
                         .onChange(of: contentBlockingEnabled) { newValue in
                             BrowserEngine.shared.contentBlockingEnabled = newValue
                         }
+                        .accessibilityIdentifier("contentBlockingToggle")
                     
                     NavigationLink(destination: ContentBlockingSettingsView()) {
                         Text("Content Blocking Settings")
                     }
+                    .accessibilityIdentifier("contentBlockingSettingsLink")
                     
                     Text("Block Cookies")
+                        .accessibilityIdentifier("blockCookiesSetting")
                     Text("Do Not Track")
+                        .accessibilityIdentifier("doNotTrackSetting")
                     Text("Clear Browsing Data")
+                        .accessibilityIdentifier("clearBrowsingDataSetting")
                 }
                 
                 Section(header: Text("Extensions")) {
                     NavigationLink(destination: ExtensionsView()) {
                         Text("Manage Extensions")
                     }
+                    .accessibilityIdentifier("manageExtensionsLink")
                 }
                 
                 Section(header: Text("About")) {
                     Text("Version 1.0.0")
+                        .accessibilityIdentifier("versionInfo")
                 }
             }
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
+            .accessibilityIdentifier("settingsScreen")
         }
     }
 }
@@ -756,12 +794,14 @@ private struct ContentBlockingSettingsView: View {
                     Text("No block lists enabled")
                         .foregroundColor(.gray)
                         .italic()
+                        .accessibilityIdentifier("noBlockListsMessage")
                 } else {
                     ForEach(blockLists) { blockList in
                         BlockListRow(blockList: blockList) {
                             // Reload block lists after toggle
                             loadBlockLists()
                         }
+                        .accessibilityIdentifier("blockList-\(blockList.id)")
                     }
                 }
             }
@@ -772,6 +812,7 @@ private struct ContentBlockingSettingsView: View {
                 }) {
                     Label("Add Custom Block List", systemImage: "plus")
                 }
+                .accessibilityIdentifier("addBlockListButton")
                 
                 Button(action: updateBlockLists) {
                     if isUpdating {
@@ -785,11 +826,13 @@ private struct ContentBlockingSettingsView: View {
                     }
                 }
                 .disabled(isUpdating)
+                .accessibilityIdentifier("updateBlockListsButton")
                 
                 Button(action: resetToDefaults) {
                     Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
                         .foregroundColor(.red)
                 }
+                .accessibilityIdentifier("resetToDefaultsButton")
             }
             
             if let lastUpdated = lastUpdated {
@@ -800,6 +843,7 @@ private struct ContentBlockingSettingsView: View {
         }
         .onAppear(perform: loadBlockLists)
         .navigationTitle("Content Blocking")
+        .accessibilityIdentifier("contentBlockingScreen")
         .sheet(isPresented: $showAddListSheet) {
             AddBlockListView { success in
                 if success {
@@ -854,6 +898,7 @@ private struct BlockListRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(blockList.name)
                     .font(.headline)
+                    .accessibilityIdentifier("blockListName")
                 
                 Text(categoryText)
                     .font(.caption)
@@ -861,11 +906,13 @@ private struct BlockListRow: View {
                     .padding(.vertical, 2)
                     .background(categoryColor.opacity(0.2))
                     .cornerRadius(4)
+                    .accessibilityIdentifier("blockListCategory")
                 
                 if let lastUpdated = blockList.lastUpdated {
                     Text("Rules: \(blockList.ruleCount) • Updated: \(lastUpdated, formatter: dateFormatter)")
                         .font(.caption)
                         .foregroundColor(.gray)
+                        .accessibilityIdentifier("blockListDetails")
                 }
             }
             
@@ -877,6 +924,7 @@ private struct BlockListRow: View {
                     ContentBlocker.shared.setBlockListEnabled(blockList, enabled: newValue)
                     onToggle()
                 }
+                .accessibilityIdentifier("blockListToggle")
         }
         .contextMenu {
             Button(action: {
@@ -927,23 +975,27 @@ private struct AddBlockListView: View {
             Form {
                 Section(header: Text("Block List Details")) {
                     TextField("Name", text: $name)
+                        .accessibilityIdentifier("blockListNameField")
                     
                     TextField("URL", text: $url)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                         .keyboardType(.URL)
+                        .accessibilityIdentifier("blockListURLField")
                     
                     Picker("Category", selection: $category) {
                         Text("Ads").tag(ContentBlocker.BlockListCategory.ads)
                         Text("Trackers").tag(ContentBlocker.BlockListCategory.trackers)
                         Text("Both").tag(ContentBlocker.BlockListCategory.both)
                     }
+                    .accessibilityIdentifier("blockListCategoryPicker")
                 }
                 
                 if let errorMessage = errorMessage {
                     Section {
                         Text(errorMessage)
                             .foregroundColor(.red)
+                            .accessibilityIdentifier("blockListErrorMessage")
                     }
                 }
                 
@@ -960,14 +1012,17 @@ private struct AddBlockListView: View {
                         }
                     }
                     .disabled(isAdding || name.isEmpty || url.isEmpty)
+                    .accessibilityIdentifier("addBlockListConfirmButton")
                 }
             }
             .navigationTitle("Add Block List")
+            .accessibilityIdentifier("addBlockListScreen")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         onDismiss(false)
                     }
+                    .accessibilityIdentifier("cancelAddBlockListButton")
                 }
             }
         }
@@ -1011,13 +1066,14 @@ private struct ExtensionsView: View {
                         Text("No extensions installed")
                             .foregroundColor(.gray)
                             .italic()
-                            .padding(.vertical, 8)
+                            .accessibilityIdentifier("noExtensionsMessage")
                     } else {
                         ForEach(extensions) { extensionItem in
                             ExtensionListItem(extension: extensionItem) {
                                 // Reload extensions after a change
                                 loadExtensions()
                             }
+                            .accessibilityIdentifier("extension-\(extensionItem.id)")
                         }
                     }
                 }
@@ -1028,22 +1084,26 @@ private struct ExtensionsView: View {
                     }) {
                         Label("Browse Extension Stores", systemImage: "safari")
                     }
+                    .accessibilityIdentifier("browseExtensionStoresButton")
                     
                     Button(action: {
                         showInstallSheet = true
                     }) {
                         Label("Install From URL", systemImage: "link")
                     }
+                    .accessibilityIdentifier("installFromURLButton")
                 }
             }
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Extensions")
+            .accessibilityIdentifier("extensionsScreen")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         showInstallSheet = false
                         showWebStoresSheet = false
                     }
+                    .accessibilityIdentifier("doneExtensionsButton")
                 }
             }
             .sheet(isPresented: $showInstallSheet) {
@@ -1121,21 +1181,25 @@ private struct ExtensionListItem: View {
             Image(systemName: `extension`.type == .chrome ? "globe" : "flame.fill")
                 .foregroundColor(`extension`.type == .chrome ? .blue : .orange)
                 .frame(width: 24, height: 24)
+                .accessibilityIdentifier("extensionIcon")
             
             // Extension details
             VStack(alignment: .leading, spacing: 2) {
                 Text(`extension`.name)
                     .font(.headline)
+                    .accessibilityIdentifier("extensionName")
                 
                 Text(`extension`.description)
                     .font(.caption)
                     .foregroundColor(.gray)
                     .lineLimit(1)
+                    .accessibilityIdentifier("extensionDescription")
                 
                 HStack {
                     Text("Version: \(`extension`.version)")
                         .font(.caption2)
                         .foregroundColor(.gray)
+                        .accessibilityIdentifier("extensionVersion")
                     
                     Text(`extension`.type == .chrome ? "Chrome" : "Firefox")
                         .font(.caption2)
@@ -1143,6 +1207,7 @@ private struct ExtensionListItem: View {
                         .padding(.vertical, 2)
                         .background(`extension`.type == .chrome ? Color.blue.opacity(0.2) : Color.orange.opacity(0.2))
                         .cornerRadius(4)
+                        .accessibilityIdentifier("extensionType")
                 }
             }
             
@@ -1155,6 +1220,7 @@ private struct ExtensionListItem: View {
                     ExtensionManager.shared.setExtensionEnabled(`extension`.id, enabled: newValue)
                     onUpdate()
                 }
+                .accessibilityIdentifier("extensionToggle")
         }
         .padding(.vertical, 4)
         .contextMenu {
