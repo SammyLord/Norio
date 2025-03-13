@@ -1,13 +1,8 @@
 import Foundation
 import UserNotifications
+import NorioCore  // Import ExtensionType from NorioCore
 
-// We no longer need the explicit reference here as it's now in ModuleLinker.swift
-
-// Local enum definition for ExtensionType
-public enum ExtensionType: String, Codable {
-    case chrome
-    case firefox
-}
+// ExtensionType is now imported from ExtensionTypes.swift
 
 public class NotificationManager {
     public static let shared = NotificationManager()
