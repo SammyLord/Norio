@@ -3,13 +3,16 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		12A1B2C52A1B3C4D00E1F2G3 /* NorioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C42A1B3C4D00E1F2G3 /* NorioCore */; };
-		12A1B2C72A1B3C4D00E1F2G3 /* NorioUI in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C62A1B3C4D00E1F2G3 /* NorioUI */; };
-		12A1B2C92A1B3C4D00E1F2G3 /* NorioExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C82A1B3C4D00E1F2G3 /* NorioExtensions */; };
+		909A7BED2D83810500BE65CD /* NorioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BEC2D83810500BE65CD /* NorioCore */; };
+		909A7BEF2D83810500BE65CD /* NorioExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BEE2D83810500BE65CD /* NorioExtensions */; };
+		909A7BF12D83810500BE65CD /* NorioUI in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF02D83810500BE65CD /* NorioUI */; };
+		909A7BF32D83811300BE65CD /* NorioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF22D83811300BE65CD /* NorioCore */; };
+		909A7BF52D83811300BE65CD /* NorioExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF42D83811300BE65CD /* NorioExtensions */; };
+		909A7BF72D83811300BE65CD /* NorioUI in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF62D83811300BE65CD /* NorioUI */; };
 		90DECB9D2D837C7800CBC5A5 /* BlockListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */; };
 		90DECB9E2D837C7800CBC5A5 /* BrowserEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */; };
 		90DECB9F2D837C7800CBC5A5 /* ContentBlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */; };
@@ -41,6 +44,7 @@
 		90DECBC72D837D6300CBC5A5 /* ContentBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBA92D837D6300CBC5A5 /* ContentBlocker.swift */; };
 		90DECBC82D837D6300CBC5A5 /* MacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB12D837D6300CBC5A5 /* MacOSApp.swift */; };
 		90DECBC92D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
+		90DECBEB2D837EFD00CBC5A5 /* Norio.app in Resources */ = {isa = PBXBuildFile; fileRef = 12A1B2B12A1B3C4D00E1F2G3 /* Norio.app */; };
 		D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */; };
 		D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */; };
 		D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */; };
@@ -53,6 +57,16 @@
 		D5E1F4132BA30F9000A8B9C0 /* InstallExtensionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4122BA30F9000A8B9C0 /* InstallExtensionUITests.swift */; };
 		D5E1F4152BA30FA000A8B9C0 /* WebViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4142BA30FA000A8B9C0 /* WebViewTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		90DECBEC2D837EFD00CBC5A5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 12A1B2952A1B3C4D00E1F2G3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 12A1B2B02A1B3C4D00E1F2G3;
+			remoteInfo = "Norio iOS";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		12A1B2A12A1B3C4D00E1F2G3 /* Norio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Norio.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -89,6 +103,7 @@
 		90DECBE02D837DAC00CBC5A5 /* ContentBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlocker.swift; sourceTree = "<group>"; };
 		90DECBE12D837DAC00CBC5A5 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		90DECBE22D837DAC00CBC5A5 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		90DECBEE2D837F0F00CBC5A5 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockListTests.swift; sourceTree = "<group>"; };
 		D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserEngineTests.swift; sourceTree = "<group>"; };
 		D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockerTests.swift; sourceTree = "<group>"; };
@@ -107,9 +122,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				12A1B2C52A1B3C4D00E1F2G3 /* NorioCore in Frameworks */,
-				12A1B2C72A1B3C4D00E1F2G3 /* NorioUI in Frameworks */,
-				12A1B2C92A1B3C4D00E1F2G3 /* NorioExtensions in Frameworks */,
+				909A7BF12D83810500BE65CD /* NorioUI in Frameworks */,
+				909A7BEF2D83810500BE65CD /* NorioExtensions in Frameworks */,
+				909A7BED2D83810500BE65CD /* NorioCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,6 +132,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				909A7BF72D83811300BE65CD /* NorioUI in Frameworks */,
+				909A7BF52D83811300BE65CD /* NorioExtensions in Frameworks */,
+				909A7BF32D83811300BE65CD /* NorioCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +181,7 @@
 		12A1B2C32A1B3C4D00E1F2G3 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				90DECBEE2D837F0F00CBC5A5 /* Package.swift */,
 				90DECBE32D837DAC00CBC5A5 /* NorioCore */,
 				90DECBD82D837DAC00CBC5A5 /* NorioExtensions */,
 				90DECBDE2D837DAC00CBC5A5 /* NorioUI */,
@@ -338,12 +357,13 @@
 			buildRules = (
 			);
 			dependencies = (
+				90DECBED2D837EFD00CBC5A5 /* PBXTargetDependency */,
 			);
 			name = "Norio macOS";
 			packageProductDependencies = (
-				12A1B2C42A1B3C4D00E1F2G3 /* NorioCore */,
-				12A1B2C62A1B3C4D00E1F2G3 /* NorioUI */,
-				12A1B2C82A1B3C4D00E1F2G3 /* NorioExtensions */,
+				909A7BEC2D83810500BE65CD /* NorioCore */,
+				909A7BEE2D83810500BE65CD /* NorioExtensions */,
+				909A7BF02D83810500BE65CD /* NorioUI */,
 			);
 			productName = "Norio macOS";
 			productReference = 12A1B2A12A1B3C4D00E1F2G3 /* Norio.app */;
@@ -363,6 +383,9 @@
 			);
 			name = "Norio iOS";
 			packageProductDependencies = (
+				909A7BF22D83811300BE65CD /* NorioCore */,
+				909A7BF42D83811300BE65CD /* NorioExtensions */,
+				909A7BF62D83811300BE65CD /* NorioUI */,
 			);
 			productName = "Norio iOS";
 			productReference = 12A1B2B12A1B3C4D00E1F2G3 /* Norio.app */;
@@ -395,6 +418,9 @@
 				Base,
 			);
 			mainGroup = 12A1B2942A1B3C4D00E1F2G3;
+			packageReferences = (
+				909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */,
+			);
 			productRefGroup = 12A1B2A22A1B3C4D00E1F2G3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -410,6 +436,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90DECBEB2D837EFD00CBC5A5 /* Norio.app in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -480,6 +507,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		90DECBED2D837EFD00CBC5A5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 12A1B2B02A1B3C4D00E1F2G3 /* Norio iOS */;
+			targetProxy = 90DECBEC2D837EFD00CBC5A5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		12A1B2D02A1B3C4D00E1F2G3 /* Debug */ = {
@@ -751,18 +786,40 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Norio;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
-		12A1B2C42A1B3C4D00E1F2G3 /* NorioCore */ = {
+		909A7BEC2D83810500BE65CD /* NorioCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = NorioCore;
 		};
-		12A1B2C62A1B3C4D00E1F2G3 /* NorioUI */ = {
+		909A7BEE2D83810500BE65CD /* NorioExtensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NorioExtensions;
+		};
+		909A7BF02D83810500BE65CD /* NorioUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = NorioUI;
 		};
-		12A1B2C82A1B3C4D00E1F2G3 /* NorioExtensions */ = {
+		909A7BF22D83811300BE65CD /* NorioCore */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */;
+			productName = NorioCore;
+		};
+		909A7BF42D83811300BE65CD /* NorioExtensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */;
 			productName = NorioExtensions;
+		};
+		909A7BF62D83811300BE65CD /* NorioUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */;
+			productName = NorioUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

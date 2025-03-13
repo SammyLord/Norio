@@ -10,11 +10,7 @@ public class ExtensionManager {
     public static let chromeWebStoreBaseURL = "https://chrome.google.com/webstore/detail/"
     public static let firefoxAddonsBaseURL = "https://addons.mozilla.org/en-US/firefox/addon/"
     
-    // Extension types
-    public enum ExtensionType: String, Codable {
-        case chrome
-        case firefox
-    }
+    // Extension type is now imported from NorioCore
     
     // Extension data model
     public struct Extension: Identifiable, Codable {

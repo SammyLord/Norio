@@ -45,7 +45,7 @@ public class NotificationManager {
     }
     
     // Show extension-related notifications
-    public func showExtensionInstalled(name: String, type: ExtensionManager.ExtensionType) {
+    public func showExtensionInstalled(name: String, type: ExtensionType) {
         let extensionType = type == .chrome ? "Chrome extension" : "Firefox add-on"
         showNotification(
             title: "Extension Installed",

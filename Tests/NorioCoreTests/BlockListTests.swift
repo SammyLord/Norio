@@ -1,4 +1,3 @@
-import XCTest
 @testable import NorioCore
 
 final class BlockListTests: XCTestCase {

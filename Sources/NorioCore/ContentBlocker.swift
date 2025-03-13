@@ -21,7 +21,7 @@ public class ContentBlocker {
     
     // Statistics
     private(set) var totalBlockedCount: Int = 0
-    private(set) var lastUpdateDate: Date?
+    public private(set) var lastUpdateDate: Date?
     
     // Settings
     public var isEnabled: Bool = true {

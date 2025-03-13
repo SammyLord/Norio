@@ -194,8 +194,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func handleExtensionAction(_ sender: NSMenuItem) {
         if let extensionId = sender.representedObject as? String,
-           let extension = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
-            ExtensionManager.shared.runExtensionAction(extension)
+           let extensionItem = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
+            ExtensionManager.shared.runExtensionAction(extensionItem)
         }
     }
     
@@ -211,7 +211,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             BrowserEngine.shared.contentBlockingEnabled = enabled
             
             // Force load the block lists
-            ContentBlocker.shared.getAvailableBlockLists()
+            _ = ContentBlocker.shared.getAvailableBlockLists()
         }
     }
 }

@@ -39,7 +39,8 @@ You can also build Norio Browser from the command line using `xcodebuild`:
 
 ### Prerequisites
 
-- Xcode
+- Xcode Command Line Tools: Install with `xcode-select --install`
+- CocoaPods (if used): Install with `sudo gem install cocoapods`
 
 ### Building for macOS
 

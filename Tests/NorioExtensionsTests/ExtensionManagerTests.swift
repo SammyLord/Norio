@@ -1,6 +1,7 @@
 import XCTest
+import Combine
+import NorioCore
 @testable import NorioExtensions
-@testable import NorioCore
 
 final class ExtensionManagerTests: XCTestCase {
     var extensionManager: ExtensionManager!
@@ -24,8 +25,8 @@ final class ExtensionManagerTests: XCTestCase {
     }
     
     func testExtensionType() {
-        XCTAssertEqual(ExtensionManager.ExtensionType.chrome.rawValue, "chrome")
-        XCTAssertEqual(ExtensionManager.ExtensionType.firefox.rawValue, "firefox")
+        XCTAssertEqual(ExtensionType.chrome.rawValue, "chrome")
+        XCTAssertEqual(ExtensionType.firefox.rawValue, "firefox")
     }
     
     func testExtensionInitialization() {

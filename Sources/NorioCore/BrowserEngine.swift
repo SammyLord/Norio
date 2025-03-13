@@ -66,7 +66,8 @@ public class BrowserEngine {
 
 // Tab management
 public extension BrowserEngine {
-    class Tab {
+    // Tab model
+    public class Tab: Identifiable {
         public let id: UUID
         public let webView: WKWebView
         public var title: String = ""
@@ -74,7 +75,7 @@ public extension BrowserEngine {
         public var favicon: Data?
         public var isLoading: Bool = false
         
-        init(id: UUID = UUID(), webView: WKWebView) {
+        public init(id: UUID = UUID(), webView: WKWebView) {
             self.id = id
             self.webView = webView
         }

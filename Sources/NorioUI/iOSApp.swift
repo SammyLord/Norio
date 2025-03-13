@@ -52,8 +52,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     @objc private func handleExtensionAction(_ notification: Notification) {
         if let extensionId = notification.userInfo?["extensionId"] as? String,
-           let extension = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
-            ExtensionManager.shared.runExtensionAction(extension)
+           let extensionItem = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
+            ExtensionManager.shared.runExtensionAction(extensionItem)
         }
     }
     
@@ -149,8 +149,8 @@ extension AppDelegate {
     
     @objc func runExtension(_ sender: UICommand) {
         if let extensionId = sender.propertyList as? String,
-           let extension = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
-            ExtensionManager.shared.runExtensionAction(extension)
+           let extensionItem = ExtensionManager.shared.getInstalledExtensions().first(where: { $0.id == extensionId }) {
+            ExtensionManager.shared.runExtensionAction(extensionItem)
         }
     }
 }

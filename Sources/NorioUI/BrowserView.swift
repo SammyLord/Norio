@@ -3,6 +3,12 @@ import WebKit
 import NorioCore
 import NorioExtensions
 
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
+
 public struct BrowserView: View {
     @StateObject private var tabManager = TabManager()
     @State private var urlString: String = ""
@@ -22,7 +28,7 @@ public struct BrowserView: View {
             HStack(spacing: 8) {
                 // Back button
                 Button(action: {
-                    tabManager.currentTab?.goBack()
+                    goBack()
                 }) {
                     Image(systemName: "chevron.left")
                         .frame(width: 32, height: 32)
@@ -32,7 +38,7 @@ public struct BrowserView: View {
                 
                 // Forward button
                 Button(action: {
-                    tabManager.currentTab?.goForward()
+                    goForward()
                 }) {
                     Image(systemName: "chevron.right")
                         .frame(width: 32, height: 32)
@@ -81,8 +87,8 @@ public struct BrowserView: View {
                 ExtensionDropdownButton(
                     showDropdown: $showExtensionsDropdown,
                     extensions: installedExtensions,
-                    onExtensionAction: { extension in
-                        ExtensionManager.shared.runExtensionAction(extension)
+                    onExtensionAction: { extensionItem in
+                        ExtensionManager.shared.runExtensionAction(extensionItem)
                     },
                     onManageExtensions: {
                         showExtensions = true
@@ -91,7 +97,7 @@ public struct BrowserView: View {
                 .accessibilityIdentifier("extensionsDropdownButton")
             }
             .padding(8)
-            .background(Color(.systemBackground))
+            .background(Color.background)
             .overlay(
                 Rectangle()
                     .frame(height: 1)
@@ -125,7 +131,7 @@ public struct BrowserView: View {
                 .accessibilityIdentifier("tabsContainer")
             }
             .frame(height: 36)
-            .background(Color(.systemBackground))
+            .background(Color.background)
             .overlay(
                 Rectangle()
                     .frame(height: 1)
@@ -135,8 +141,8 @@ public struct BrowserView: View {
             .accessibilityIdentifier("tabBar")
             
             // Web content view
-            WebViewContainer(tab: tabManager.currentTab) { tab, title, url, isLoading in
-                if let tab = tab, let url = url {
+            BrowserWebViewContainer(tab: tabManager.currentTab) { tab, title, url, isLoading in
+                if let tab = tab {
                     tabManager.updateTab(tab, title: title, url: url, isLoading: isLoading)
                     
                     // Update URL string if it's the current tab
@@ -160,7 +166,7 @@ public struct BrowserView: View {
             }
             .padding(.horizontal, 8)
             .frame(height: 24)
-            .background(Color(.systemBackground))
+            .background(Color.background)
             .accessibilityIdentifier("statusBar")
         }
         .sheet(isPresented: $showSettings) {
@@ -205,6 +211,18 @@ public struct BrowserView: View {
             tabManager.currentTab?.loadURL(url)
         }
     }
+    
+    func goBack() {
+        if let tab = tabManager.currentTab {
+            _ = tab.goBack()
+        }
+    }
+    
+    func goForward() {
+        if let tab = tabManager.currentTab {
+            _ = tab.goForward()
+        }
+    }
 }
 
 // Extensions Dropdown Button
@@ -225,9 +243,9 @@ private struct ExtensionDropdownButton: View {
             
             if showDropdown {
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(extensions) { extension in
-                        ExtensionDropdownItem(extension: extension) {
-                            onExtensionAction(extension)
+                    ForEach(extensions) { extensionItem in
+                        ExtensionDropdownItem(extensionItem: extensionItem) {
+                            onExtensionAction(extensionItem)
                             showDropdown = false
                         }
                     }
@@ -248,7 +266,7 @@ private struct ExtensionDropdownButton: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
-                .background(Color(.systemBackground))
+                .background(Color.background)
                 .cornerRadius(8)
                 .shadow(radius: 3)
                 .overlay(
@@ -264,22 +282,13 @@ private struct ExtensionDropdownButton: View {
                 .onAppear {
                     // Add a global tap gesture to close the dropdown when tapping elsewhere
                     #if os(iOS)
-                    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
-                    tapGesture.cancelsTouchesInView = false
-                    UIApplication.shared.windows.first?.addGestureRecognizer(tapGesture)
+                    setupTapHandler()
                     #endif
                 }
                 .onDisappear {
                     // Remove the global tap gesture
                     #if os(iOS)
-                    if let gestureRecognizers = UIApplication.shared.windows.first?.gestureRecognizers {
-                        for gesture in gestureRecognizers {
-                            if let tapGesture = gesture as? UITapGestureRecognizer, 
-                               tapGesture.name == "ExtensionDropdownCloseTap" {
-                                UIApplication.shared.windows.first?.removeGestureRecognizer(tapGesture)
-                            }
-                        }
-                    }
+                    tapHandler = nil
                     #endif
                 }
             }
@@ -288,28 +297,51 @@ private struct ExtensionDropdownButton: View {
     }
     
     #if os(iOS)
-    @objc private func handleTap() {
-        showDropdown = false
+    // Using a class-based coordinator for Objective-C compatibility
+    private final class TapHandler: NSObject {
+        var onTap: () -> Void
+        
+        init(onTap: @escaping () -> Void) {
+            self.onTap = onTap
+            super.init()
+        }
+        
+        @objc func handleTap() {
+            onTap()
+        }
+    }
+    
+    private var tapHandler: TapHandler?
+    
+    private func setupTapHandler() {
+        tapHandler = TapHandler(onTap: { [weak showDropdown] in
+            showDropdown?.wrappedValue = false
+        })
+        
+        let tapGesture = UITapGestureRecognizer(target: tapHandler, action: #selector(TapHandler.handleTap))
+        tapGesture.cancelsTouchesInView = false
+        tapGesture.name = "ExtensionDropdownCloseTap"
+        UIApplication.shared.windows.first?.addGestureRecognizer(tapGesture)
     }
     #endif
 }
 
 // Extension Dropdown Item
 private struct ExtensionDropdownItem: View {
-    let extension: ExtensionManager.Extension
+    let extensionItem: ExtensionManager.Extension
     let onTap: () -> Void
     
     var body: some View {
         Button(action: onTap) {
             HStack {
                 // Extension icon (placeholder for now)
-                Image(systemName: extension.type == .chrome ? "globe" : "flame.fill")
-                    .foregroundColor(extension.type == .chrome ? .blue : .orange)
+                Image(systemName: extensionItem.type == .chrome ? "globe" : "flame.fill")
+                    .foregroundColor(extensionItem.type == .chrome ? .blue : .orange)
                     .frame(width: 24, height: 24)
                 
                 // Extension name
-                Text(extension.name)
-                    .lineLimit(1)
+                Text(extensionItem.name)
+                    .font(.system(size: 14, weight: .medium))
                 
                 Spacer()
             }
@@ -346,8 +378,12 @@ private struct TabView: View {
             .accessibilityIdentifier("closeTabButton")
         }
         .frame(width: 180, height: 36)
-        .background(isSelected ? Color(.systemGray5) : Color(.systemBackground))
+        .background(isSelected ? Color.secondary.opacity(0.2) : Color.background)
+        #if os(iOS)
         .cornerRadius(8, corners: [.topLeft, .topRight])
+        #else
+        .cornerRadius(8)
+        #endif
         .onTapGesture {
             onSelect()
         }
@@ -355,316 +391,67 @@ private struct TabView: View {
     }
 }
 
-// WebView Container
-private struct WebViewContainer: UIViewRepresentable {
+#if os(macOS)
+// WebView Container for macOS
+private struct BrowserWebViewContainer: View {
     let tab: BrowserEngine.Tab?
     let onUpdate: (BrowserEngine.Tab?, String, URL, Bool) -> Void
     
-    #if os(macOS)
-    typealias UIViewType = NSView
-    #else
-    typealias UIViewType = UIView
-    #endif
+    @State private var statusUrl: String = ""
+    @State private var isLoading: Bool = false
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    #if os(macOS)
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.accessibilityIdentifier = "webViewParent"
-        if let tab = tab {
-            tab.webView.frame = view.bounds
-            tab.webView.autoresizingMask = [.width, .height]
-            view.addSubview(tab.webView)
-            
-            // Set accessibility identifier for the WebView
-            tab.webView.accessibilityIdentifier = "webView-\(tab.id)"
-            
-            tab.webView.navigationDelegate = context.coordinator
-            tab.webView.uiDelegate = context.coordinator
-            
-            // Apply content blocker rules
-            ContentBlocker.shared.applyRulesToWebView(tab.webView)
-        }
-        return view
-    }
-    
-    func updateNSView(_ nsView: NSView, context: Context) {
-        updateView(nsView, context: context)
-    }
-    #else
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.accessibilityIdentifier = "webViewParent"
-        if let tab = tab {
-            tab.webView.frame = view.bounds
-            tab.webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            view.addSubview(tab.webView)
-            
-            // Set accessibility identifier for the WebView
-            tab.webView.accessibilityIdentifier = "webView-\(tab.id)"
-            
-            tab.webView.navigationDelegate = context.coordinator
-            tab.webView.uiDelegate = context.coordinator
-            
-            // Apply content blocker rules
-            ContentBlocker.shared.applyRulesToWebView(tab.webView)
-        }
-        return view
-    }
-    
-    func updateUIView(_ uiView: UIView, context: Context) {
-        updateView(uiView, context: context)
-    }
-    #endif
-    
-    private func updateView(_ view: UIViewType, context: Context) {
-        // Clear existing subviews
-        view.subviews.forEach { $0.removeFromSuperview() }
-        
-        // Add the current tab's WebView
-        if let tab = tab {
-            tab.webView.frame = view.bounds
-            #if os(macOS)
-            tab.webView.autoresizingMask = [.width, .height]
-            #else
-            tab.webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            #endif
-            view.addSubview(tab.webView)
-            
-            tab.webView.navigationDelegate = context.coordinator
-            tab.webView.uiDelegate = context.coordinator
-            
-            // Apply extensions and content blocker rules
-            ExtensionManager.shared.applyExtensionsToWebView(tab.webView)
-            ContentBlocker.shared.applyRulesToWebView(tab.webView)
-        }
-    }
-    
-    class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
-        private var parent: WebViewContainer
-        
-        init(_ parent: WebViewContainer) {
-            self.parent = parent
-        }
-        
-        // MARK: - WKNavigationDelegate
-        
-        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            guard let tab = parent.tab else { return }
-            parent.onUpdate(tab, tab.title, webView.url ?? URL(string: "about:blank")!, true)
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            guard let tab = parent.tab else { return }
-            parent.onUpdate(tab, webView.title ?? "", webView.url ?? URL(string: "about:blank")!, false)
-            
-            // Check if we're on an extension store page and offer to install
-            checkForExtensionInstallation(webView)
-        }
-        
-        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            guard let tab = parent.tab else { return }
-            parent.onUpdate(tab, "Error", webView.url ?? URL(string: "about:blank")!, false)
-        }
-        
-        // MARK: - WKUIDelegate
-        
-        func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-            // Handle new window/tab requests
-            if navigationAction.targetFrame == nil {
-                webView.load(navigationAction.request)
-            }
-            return nil
-        }
-        
-        // MARK: - Extension Installation Detection
-        
-        private func checkForExtensionInstallation(_ webView: WKWebView) {
-            guard let url = webView.url?.absoluteString else { return }
-            
-            // Check if we're on a Chrome extension page
-            if url.hasPrefix(ExtensionManager.chromeWebStoreBaseURL) {
-                // Extract ID from URL
-                let components = url.components(separatedBy: "/")
-                if components.count > 5 {
-                    let extensionId = components[5].split(separator: "?").first ?? ""
-                    if !extensionId.isEmpty && extensionId.count == 32 {
-                        offerToInstallExtension(
-                            id: String(extensionId),
-                            type: .chrome,
-                            webView: webView
-                        )
-                    }
-                }
-            }
-            // Check if we're on a Firefox addon page
-            else if url.hasPrefix(ExtensionManager.firefoxAddonsBaseURL) {
-                // Extract ID from URL
-                let components = url.components(separatedBy: "/")
-                if components.count >= 6 {
-                    let extensionId = components[5].split(separator: "?").first ?? ""
-                    if !extensionId.isEmpty {
-                        offerToInstallExtension(
-                            id: String(extensionId),
-                            type: .firefox,
-                            webView: webView
-                        )
-                    }
-                }
+    var body: some View {
+        WebViewContainer(
+            tab: tab,
+            statusUrl: $statusUrl,
+            isLoading: $isLoading
+        )
+        .onAppear {
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, tab.isLoading)
             }
         }
-        
-        private func offerToInstallExtension(id: String, type: ExtensionManager.ExtensionType, webView: WKWebView) {
-            #if os(macOS)
-            let alert = NSAlert()
-            alert.messageText = "Install Extension"
-            alert.informativeText = "Would you like to install this \(type == .chrome ? "Chrome" : "Firefox") extension?"
-            alert.addButton(withTitle: "Install")
-            alert.addButton(withTitle: "Cancel")
-            
-            if alert.runModal() == .alertFirstButtonReturn {
-                installExtension(id: id, type: type)
-            }
-            #else
-            // On iOS, inject a banner into the page
-            let bannerScript = """
-            (function() {
-                if (document.getElementById('norioInstallBanner')) return;
-                
-                var banner = document.createElement('div');
-                banner.id = 'norioInstallBanner';
-                banner.style.position = 'fixed';
-                banner.style.top = '0';
-                banner.style.left = '0';
-                banner.style.right = '0';
-                banner.style.backgroundColor = '#007AFF';
-                banner.style.color = 'white';
-                banner.style.padding = '10px';
-                banner.style.textAlign = 'center';
-                banner.style.zIndex = '9999';
-                banner.style.fontFamily = '-apple-system, BlinkMacSystemFont, sans-serif';
-                
-                banner.innerHTML = '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                    '<span>Install this \(type == .chrome ? "Chrome" : "Firefox") extension in Norio?</span>' +
-                    '<button id="norioInstallButton" style="background-color: white; color: #007AFF; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold;">Install</button>' +
-                    '</div>';
-                
-                document.body.insertBefore(banner, document.body.firstChild);
-                document.body.style.marginTop = (banner.offsetHeight + 10) + 'px';
-                
-                document.getElementById('norioInstallButton').addEventListener('click', function() {
-                    window.webkit.messageHandlers.installExtension.postMessage({
-                        id: '\(id)',
-                        type: '\(type == .chrome ? "chrome" : "firefox")'
-                    });
-                    banner.style.display = 'none';
-                    document.body.style.marginTop = '0';
-                });
-            })();
-            """
-            
-            // Add a script message handler for the install button
-            webView.configuration.userContentController.add(self, name: "installExtension")
-            
-            // Inject the banner
-            webView.evaluateJavaScript(bannerScript, completionHandler: nil)
-            #endif
-        }
-        
-        private func installExtension(id: String, type: ExtensionManager.ExtensionType) {
-            switch type {
-            case .chrome:
-                ExtensionManager.shared.installChromeExtensionFromStore(id: id) { result in
-                    self.handleInstallResult(result)
-                }
-            case .firefox:
-                ExtensionManager.shared.installFirefoxExtensionFromStore(id: id) { result in
-                    self.handleInstallResult(result)
-                }
+        .onChange(of: statusUrl) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, isLoading)
             }
         }
-        
-        private func handleInstallResult(_ result: Result<ExtensionManager.Extension, Error>) {
-            DispatchQueue.main.async {
-                #if os(macOS)
-                let alert = NSAlert()
-                switch result {
-                case .success(let ext):
-                    alert.messageText = "Extension Installed"
-                    alert.informativeText = "\(ext.name) has been successfully installed."
-                    alert.addButton(withTitle: "OK")
-                case .failure(let error):
-                    alert.messageText = "Installation Failed"
-                    alert.informativeText = "The extension could not be installed: \(error.localizedDescription)"
-                    alert.addButton(withTitle: "OK")
-                }
-                alert.runModal()
-                #else
-                // On iOS, show a banner notification
-                let script: String
-                switch result {
-                case .success(let ext):
-                    script = """
-                    (function() {
-                        var banner = document.createElement('div');
-                        banner.style.position = 'fixed';
-                        banner.style.top = '0';
-                        banner.style.left = '0';
-                        banner.style.right = '0';
-                        banner.style.backgroundColor = '#4CD964';
-                        banner.style.color = 'white';
-                        banner.style.padding = '10px';
-                        banner.style.textAlign = 'center';
-                        banner.style.zIndex = '9999';
-                        banner.style.fontFamily = '-apple-system, BlinkMacSystemFont, sans-serif';
-                        banner.innerHTML = '\(ext.name) has been successfully installed.';
-                        document.body.appendChild(banner);
-                        setTimeout(function() { banner.style.display = 'none'; }, 3000);
-                    })();
-                    """
-                case .failure:
-                    script = """
-                    (function() {
-                        var banner = document.createElement('div');
-                        banner.style.position = 'fixed';
-                        banner.style.top = '0';
-                        banner.style.left = '0';
-                        banner.style.right = '0';
-                        banner.style.backgroundColor = '#FF3B30';
-                        banner.style.color = 'white';
-                        banner.style.padding = '10px';
-                        banner.style.textAlign = 'center';
-                        banner.style.zIndex = '9999';
-                        banner.style.fontFamily = '-apple-system, BlinkMacSystemFont, sans-serif';
-                        banner.innerHTML = 'The extension could not be installed.';
-                        document.body.appendChild(banner);
-                        setTimeout(function() { banner.style.display = 'none'; }, 3000);
-                    })();
-                    """
-                }
-                self.parent.tab?.webView.evaluateJavaScript(script, completionHandler: nil)
-                #endif
+        .onChange(of: isLoading) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, newValue)
             }
         }
     }
 }
-
-// MARK: - Script Message Handler for iOS
-#if os(iOS)
-extension WebViewContainer.Coordinator: WKScriptMessageHandler {
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if message.name == "installExtension" {
-            guard let body = message.body as? [String: String],
-                  let id = body["id"],
-                  let typeString = body["type"],
-                  let type = typeString == "chrome" ? ExtensionManager.ExtensionType.chrome : ExtensionManager.ExtensionType.firefox else {
-                return
+#else
+// WebView Container for iOS
+private struct BrowserWebViewContainer: View {
+    let tab: BrowserEngine.Tab?
+    let onUpdate: (BrowserEngine.Tab?, String, URL, Bool) -> Void
+    
+    @State private var statusUrl: String = ""
+    @State private var isLoading: Bool = false
+    
+    var body: some View {
+        WebViewContainer(
+            tab: tab,
+            statusUrl: $statusUrl,
+            isLoading: $isLoading
+        )
+        .onAppear {
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, tab.isLoading)
             }
-            
-            installExtension(id: id, type: type)
+        }
+        .onChange(of: statusUrl) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, isLoading)
+            }
+        }
+        .onChange(of: isLoading) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, tab.title, url, newValue)
+            }
         }
     }
 }
@@ -731,7 +518,9 @@ private struct SettingsView: View {
     
     var body: some View {
         NavigationView {
+            // Settings list
             List {
+                // General settings
                 Section(header: Text("General")) {
                     Text("Homepage")
                         .accessibilityIdentifier("homepageSetting")
@@ -741,6 +530,7 @@ private struct SettingsView: View {
                         .accessibilityIdentifier("defaultBrowserSetting")
                 }
                 
+                // Privacy settings
                 Section(header: Text("Privacy")) {
                     Toggle("Block Ads and Trackers", isOn: $contentBlockingEnabled)
                         .onChange(of: contentBlockingEnabled) { newValue in
@@ -761,19 +551,17 @@ private struct SettingsView: View {
                         .accessibilityIdentifier("clearBrowsingDataSetting")
                 }
                 
-                Section(header: Text("Extensions")) {
-                    NavigationLink(destination: ExtensionsView()) {
-                        Text("Manage Extensions")
-                    }
-                    .accessibilityIdentifier("manageExtensionsLink")
-                }
-                
+                // About section
                 Section(header: Text("About")) {
                     Text("Version 1.0.0")
                         .accessibilityIdentifier("versionInfo")
                 }
             }
+            #if os(iOS)
             .listStyle(InsetGroupedListStyle())
+            #else
+            .listStyle(DefaultListStyle())
+            #endif
             .navigationTitle("Settings")
             .accessibilityIdentifier("settingsScreen")
         }
@@ -978,9 +766,12 @@ private struct AddBlockListView: View {
                         .accessibilityIdentifier("blockListNameField")
                     
                     TextField("URL", text: $url)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        #if os(iOS)
                         .keyboardType(.URL)
+                        .autocapitalization(.none)
+                        #endif
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .disableAutocorrection(true)
                         .accessibilityIdentifier("blockListURLField")
                     
                     Picker("Category", selection: $category) {
@@ -1018,12 +809,21 @@ private struct AddBlockListView: View {
             .navigationTitle("Add Block List")
             .accessibilityIdentifier("addBlockListScreen")
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         onDismiss(false)
                     }
                     .accessibilityIdentifier("cancelAddBlockListButton")
                 }
+                #else
+                ToolbarItem {
+                    Button("Cancel") {
+                        onDismiss(false)
+                    }
+                    .accessibilityIdentifier("cancelAddBlockListButton")
+                }
+                #endif
             }
         }
     }
@@ -1053,10 +853,9 @@ private struct AddBlockListView: View {
 // Extensions View
 private struct ExtensionsView: View {
     @State private var extensions: [ExtensionManager.Extension] = []
-    @State private var showInstallSheet: Bool = false
-    @State private var showWebStoresSheet: Bool = false
+    @State private var showExtensionInstaller: Bool = false
+    @State private var selectedExtensionType: ExtensionType = .chrome
     @State private var installURL: String = ""
-    @State private var selectedExtensionType: ExtensionManager.ExtensionType = .chrome
     
     var body: some View {
         NavigationView {
@@ -1065,62 +864,76 @@ private struct ExtensionsView: View {
                     if extensions.isEmpty {
                         Text("No extensions installed")
                             .foregroundColor(.gray)
-                            .italic()
+                            .padding()
                             .accessibilityIdentifier("noExtensionsMessage")
                     } else {
                         ForEach(extensions) { extensionItem in
-                            ExtensionListItem(extension: extensionItem) {
+                            ExtensionListItem(extensionItem: extensionItem) {
                                 // Reload extensions after a change
                                 loadExtensions()
                             }
-                            .accessibilityIdentifier("extension-\(extensionItem.id)")
+                            .contextMenu {
+                                Button(role: .destructive, action: {
+                                    ExtensionManager.shared.removeExtension(extensionItem.id)
+                                    loadExtensions()
+                                }) {
+                                    Label("Remove", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                 }
                 
                 Section {
                     Button(action: {
-                        showWebStoresSheet = true
-                    }) {
-                        Label("Browse Extension Stores", systemImage: "safari")
-                    }
-                    .accessibilityIdentifier("browseExtensionStoresButton")
-                    
-                    Button(action: {
-                        showInstallSheet = true
+                        showExtensionInstaller = true
                     }) {
                         Label("Install From URL", systemImage: "link")
                     }
                     .accessibilityIdentifier("installFromURLButton")
                 }
             }
+            #if os(iOS)
             .listStyle(InsetGroupedListStyle())
+            #else
+            .listStyle(DefaultListStyle())
+            #endif
             .navigationTitle("Extensions")
-            .accessibilityIdentifier("extensionsScreen")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showInstallSheet = false
-                        showWebStoresSheet = false
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: {
+                        showExtensionInstaller = true
+                    }) {
+                        Image(systemName: "plus")
                     }
-                    .accessibilityIdentifier("doneExtensionsButton")
+                    .accessibilityIdentifier("addExtensionButton")
                 }
             }
-            .sheet(isPresented: $showInstallSheet) {
-                InstallExtensionView(selectedType: $selectedExtensionType, url: $installURL) {
-                    installExtension()
-                }
-            }
-            .sheet(isPresented: $showWebStoresSheet) {
+            .sheet(isPresented: $showExtensionInstaller) {
                 NavigationView {
-                    WebStoreExtensionsView()
-                        .navigationBarItems(trailing: Button("Done") {
-                            showWebStoresSheet = false
-                            // Refresh the list after possibly installing from stores
-                            loadExtensions()
-                        })
+                    InstallExtensionView(selectedType: $selectedExtensionType, url: $installURL) {
+                        installExtension()
+                    }
+                    .navigationTitle("Install Extension")
+                    .toolbar {
+                        #if os(iOS)
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Cancel") {
+                                showExtensionInstaller = false
+                            }
+                        }
+                        #else
+                        ToolbarItem {
+                            Button("Cancel") {
+                                showExtensionInstaller = false
+                            }
+                        }
+                        #endif
+                    }
                 }
+                #if os(iOS)
                 .navigationViewStyle(StackNavigationViewStyle())
+                #endif
             }
             .onAppear {
                 loadExtensions()
@@ -1153,59 +966,59 @@ private struct ExtensionsView: View {
             case .success:
                 // Extension installed successfully
                 installURL = ""
-                showInstallSheet = false
+                showExtensionInstaller = false
                 loadExtensions()
             case .failure:
                 // Extension installation failed
                 // In a real app, show an error message
-                showInstallSheet = false
+                showExtensionInstaller = false
             }
         }
     }
 }
 
 private struct ExtensionListItem: View {
-    let extension: ExtensionManager.Extension
+    let extensionItem: ExtensionManager.Extension
     let onUpdate: () -> Void
     @State private var isEnabled: Bool
     
-    init(extension: ExtensionManager.Extension, onUpdate: @escaping () -> Void) {
-        self.extension = `extension`
+    init(extensionItem: ExtensionManager.Extension, onUpdate: @escaping () -> Void) {
+        self.extensionItem = extensionItem
         self.onUpdate = onUpdate
-        self._isEnabled = State(initialValue: `extension`.enabled)
+        self._isEnabled = State(initialValue: extensionItem.enabled)
     }
     
     var body: some View {
         HStack {
             // Extension icon
-            Image(systemName: `extension`.type == .chrome ? "globe" : "flame.fill")
-                .foregroundColor(`extension`.type == .chrome ? .blue : .orange)
+            Image(systemName: extensionItem.type == .chrome ? "globe" : "flame.fill")
+                .foregroundColor(extensionItem.type == .chrome ? .blue : .orange)
                 .frame(width: 24, height: 24)
                 .accessibilityIdentifier("extensionIcon")
             
             // Extension details
             VStack(alignment: .leading, spacing: 2) {
-                Text(`extension`.name)
+                Text(extensionItem.name)
                     .font(.headline)
                     .accessibilityIdentifier("extensionName")
                 
-                Text(`extension`.description)
+                Text(extensionItem.description)
                     .font(.caption)
                     .foregroundColor(.gray)
                     .lineLimit(1)
                     .accessibilityIdentifier("extensionDescription")
                 
                 HStack {
-                    Text("Version: \(`extension`.version)")
+                    Text("Version: \(extensionItem.version)")
                         .font(.caption2)
                         .foregroundColor(.gray)
                         .accessibilityIdentifier("extensionVersion")
                     
-                    Text(`extension`.type == .chrome ? "Chrome" : "Firefox")
+                    Text(extensionItem.type == .chrome ? "Chrome" : "Firefox")
                         .font(.caption2)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(`extension`.type == .chrome ? Color.blue.opacity(0.2) : Color.orange.opacity(0.2))
+                        .background(extensionItem.type == .chrome ? Color.blue.opacity(0.2) : Color.orange.opacity(0.2))
                         .cornerRadius(4)
                         .accessibilityIdentifier("extensionType")
                 }
@@ -1217,26 +1030,17 @@ private struct ExtensionListItem: View {
             Toggle("", isOn: $isEnabled)
                 .labelsHidden()
                 .onChange(of: isEnabled) { newValue in
-                    ExtensionManager.shared.setExtensionEnabled(`extension`.id, enabled: newValue)
+                    ExtensionManager.shared.setExtensionEnabled(extensionItem.id, enabled: newValue)
                     onUpdate()
                 }
                 .accessibilityIdentifier("extensionToggle")
         }
         .padding(.vertical, 4)
-        .contextMenu {
-            Button(action: {
-                // Remove the extension
-                ExtensionManager.shared.removeExtension(`extension`.id)
-                onUpdate()
-            }) {
-                Label("Remove Extension", systemImage: "trash")
-            }
-        }
     }
 }
 
 private struct InstallExtensionView: View {
-    @Binding var selectedType: ExtensionManager.ExtensionType
+    @Binding var selectedType: ExtensionType
     @Binding var url: String
     let onInstall: () -> Void
     @Environment(\.presentationMode) var presentationMode
@@ -1246,17 +1050,21 @@ private struct InstallExtensionView: View {
             Form {
                 Section(header: Text("Extension Type")) {
                     Picker("Type", selection: $selectedType) {
-                        Text("Chrome Extension").tag(ExtensionManager.ExtensionType.chrome)
-                        Text("Firefox Add-on").tag(ExtensionManager.ExtensionType.firefox)
+                        Text("Chrome Extension").tag(ExtensionType.chrome)
+                        Text("Firefox Add-on").tag(ExtensionType.firefox)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                Section(header: Text("Extension URL"), footer: Text("Enter the URL of the extension file (.crx or .xpi)")) {
-                    TextField("https://example.com/extension.crx", text: $url)
+                Section(header: Text("URL")) {
+                    TextField("Extension URL", text: $url)
+                        #if os(iOS)
                         .keyboardType(.URL)
                         .autocapitalization(.none)
+                        #endif
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                         .disableAutocorrection(true)
+                        .accessibilityIdentifier("extensionURLField")
                 }
                 
                 Section {
@@ -1269,18 +1077,26 @@ private struct InstallExtensionView: View {
             }
             .navigationTitle("Install Extension")
             .toolbar {
+                #if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Cancel") {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
+                #else
+                ToolbarItem {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                #endif
             }
         }
     }
 }
 
 // Web Store Extensions View
-private struct WebStoreExtensionsView: View {
+private struct BrowserWebStoreView: View {
     enum StoreType {
         case chrome
         case firefox
@@ -1292,17 +1108,24 @@ private struct WebStoreExtensionsView: View {
             }
         }
         
-        var placeholderText: String {
+        var searchPlaceholder: String {
             switch self {
-            case .chrome: return "Chrome extension ID or name"
-            case .firefox: return "Firefox add-on ID or name"
+            case .chrome: return "Search Chrome extensions"
+            case .firefox: return "Search Firefox add-ons"
+            }
+        }
+        
+        var baseURL: String {
+            switch self {
+            case .chrome: return "https://chrome.google.com/webstore/category/extensions"
+            case .firefox: return "https://addons.mozilla.org/en-US/firefox/extensions/"
             }
         }
         
         var exampleID: String {
             switch self {
-            case .chrome: return "bkbeeeffjjeopflfhgeknacdieedcoml" // Ghostery example
-            case .firefox: return "ghostery" // Ghostery example
+            case .chrome: return "cjpalhdlnbpafiamejdnhcphjbkeiagm"
+            case .firefox: return "ublock-origin"
             }
         }
     }
@@ -1321,7 +1144,7 @@ private struct WebStoreExtensionsView: View {
         let description: String
         let storeURL: URL
         let iconURL: URL?
-        let type: ExtensionManager.ExtensionType
+        let type: ExtensionType
         
         var isInstalling = false
     }
@@ -1329,48 +1152,10 @@ private struct WebStoreExtensionsView: View {
     var body: some View {
         VStack {
             // Store selector
-            Picker("Store", selection: $selectedStore) {
-                Text("Chrome Web Store").tag(StoreType.chrome)
-                Text("Firefox Add-ons").tag(StoreType.firefox)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding(.horizontal)
-            .padding(.top)
-            .onChange(of: selectedStore) { _ in
-                // Clear search when changing stores
-                searchText = ""
-                searchResults = []
-                loadFeaturedExtensions()
-            }
+            storePickerView
             
             // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                
-                TextField(selectedStore.placeholderText, text: $searchText)
-                    .submitLabel(.search)
-                    .onSubmit {
-                        searchExtensions()
-                    }
-                
-                if !searchText.isEmpty {
-                    Button(action: {
-                        searchText = ""
-                        searchResults = []
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                
-                Button("Search") {
-                    searchExtensions()
-                }
-                .disabled(searchText.isEmpty || isSearching)
-            }
-            .padding()
+            searchBarView
             
             if let errorMessage = errorMessage {
                 Text(errorMessage)
@@ -1379,59 +1164,133 @@ private struct WebStoreExtensionsView: View {
             }
             
             // Results list
-            if isSearching {
-                ProgressView("Searching...")
-                    .padding()
-            } else if !searchResults.isEmpty {
-                ScrollView {
-                    LazyVStack {
-                        ForEach(searchResults.indices, id: \.self) { index in
-                            ExtensionResultItem(
-                                result: searchResults[index],
-                                onInstall: { installExtension(searchResults[index]) }
-                            )
-                            .padding(.horizontal)
-                            .background(index % 2 == 0 ? Color(.systemBackground) : Color(.systemGray6))
-                        }
-                    }
-                }
-            } else {
-                // Featured extensions
-                ScrollView {
-                    VStack(alignment: .leading) {
-                        Text("Featured \(selectedStore.title) Extensions")
-                            .font(.headline)
-                            .padding(.horizontal)
-                            .padding(.top)
-                        
-                        if featuredExtensions.isEmpty {
-                            ProgressView("Loading featured extensions...")
-                                .padding()
-                        } else {
-                            LazyVStack {
-                                ForEach(featuredExtensions.indices, id: \.self) { index in
-                                    ExtensionResultItem(
-                                        result: featuredExtensions[index],
-                                        onInstall: { installExtension(featuredExtensions[index]) }
-                                    )
-                                    .padding(.horizontal)
-                                    .background(index % 2 == 0 ? Color(.systemBackground) : Color(.systemGray6))
-                                }
-                            }
-                        }
-                        
-                        Text("Example: Search for an extension by ID: \(selectedStore.exampleID)")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding()
-                    }
-                }
-            }
+            resultsView
         }
         .navigationTitle("Browse Extensions")
         .onAppear {
             loadFeaturedExtensions()
         }
+    }
+    
+    private var storePickerView: some View {
+        Picker("Store", selection: $selectedStore) {
+            Text("Chrome Web Store").tag(StoreType.chrome)
+            Text("Firefox Add-ons").tag(StoreType.firefox)
+        }
+        .pickerStyle(SegmentedPickerStyle())
+        .padding(.horizontal)
+        .padding(.top)
+        .onChange(of: selectedStore) { _ in
+            // Clear search when changing stores
+            searchText = ""
+            searchResults = []
+            loadFeaturedExtensions()
+        }
+    }
+    
+    private var searchBarView: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            
+            TextField(selectedStore.searchPlaceholder, text: $searchText)
+                .submitLabel(.search)
+                .onSubmit {
+                    searchExtensions()
+                }
+            
+            if !searchText.isEmpty {
+                Button(action: {
+                    searchText = ""
+                    searchResults = []
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            Button("Search") {
+                searchExtensions()
+            }
+            .disabled(searchText.isEmpty || isSearching)
+        }
+        .padding()
+    }
+    
+    private var resultsView: some View {
+        Group {
+            if isSearching {
+                ProgressView("Searching...")
+                    .padding()
+            } else if !searchResults.isEmpty {
+                searchResultsListView
+            } else {
+                featuredExtensionsView
+            }
+        }
+    }
+    
+    private var searchResultsListView: some View {
+        ScrollView {
+            searchResultsContent
+        }
+    }
+    
+    private var searchResultsContent: some View {
+        LazyVStack {
+            ForEach(searchResults.indices, id: \.self) { index in
+                extensionResultItem(for: searchResults[index], at: index)
+            }
+        }
+    }
+    
+    private var featuredExtensionsView: some View {
+        ScrollView {
+            featuredContent
+        }
+    }
+    
+    private var featuredContent: some View {
+        VStack(alignment: .leading) {
+            Text("Featured \(selectedStore.title) Extensions")
+                .font(.headline)
+                .padding(.horizontal)
+                .padding(.top)
+            
+            if featuredExtensions.isEmpty {
+                ProgressView("Loading featured extensions...")
+                    .padding()
+            } else {
+                featuredExtensionsList
+            }
+            
+            Text("Example: Search for an extension by ID: \(selectedStore.exampleID)")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .padding()
+        }
+    }
+    
+    private var featuredExtensionsList: some View {
+        LazyVStack {
+            ForEach(featuredExtensions.indices, id: \.self) { index in
+                extensionResultItem(for: featuredExtensions[index], at: index)
+            }
+        }
+    }
+    
+    private func extensionResultItem(for result: ExtensionResult, at index: Int) -> some View {
+        ExtensionResultItem(
+            result: result,
+            onInstall: { installExtension(result) }
+        )
+        .padding(.horizontal)
+        #if os(macOS)
+        .background(index % 2 == 0 ? Color.white : Color.gray.opacity(0.1))
+        #else
+        .background(index % 2 == 0 ? Color.white : Color.gray.opacity(0.1))
+        #endif
     }
     
     private func loadFeaturedExtensions() {
@@ -1611,7 +1470,7 @@ private struct WebStoreExtensionsView: View {
 
 // Extension Result Item
 private struct ExtensionResultItem: View {
-    let result: WebStoreExtensionsView.ExtensionResult
+    let result: BrowserWebStoreView.ExtensionResult
     let onInstall: () -> Void
     
     var body: some View {
@@ -1695,7 +1554,8 @@ private struct HistoryView: View {
     }
 }
 
-// Helper for rounded corners
+#if os(iOS)
+// Extension for rounded corners on specific corners
 extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
@@ -1709,5 +1569,17 @@ struct RoundedCorner: Shape {
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
         return Path(path.cgPath)
+    }
+}
+#endif
+
+// MARK: - Color Extensions
+extension Color {
+    static var background: Color {
+        #if os(macOS)
+        return Color(NSColor.windowBackgroundColor)
+        #else
+        return Color(UIColor.systemBackground)
+        #endif
     }
 } 
