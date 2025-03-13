@@ -1,8 +1,11 @@
 import Foundation
 import UserNotifications
-import NorioCore  // Import ExtensionType from NorioCore
 
-// ExtensionType is now imported from ExtensionTypes.swift
+// ExtensionType is defined in ExtensionTypes.swift (part of the same module)
+// Explicitly importing it to ensure it's accessible
+import NorioCore
+
+// No need to import or create a typealias since both are in the same module
 
 public class NotificationManager {
     public static let shared = NotificationManager()
@@ -16,14 +19,11 @@ public class NotificationManager {
     private func requestPermissions() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if let error = error {
-                Logger.shared.error("Failed to request notification permissions: \(error.localizedDescription)")
+                print("Error requesting notification authorization: \(error.localizedDescription)")
+                return
             }
             
-            if granted {
-                Logger.shared.info("Notification permissions granted")
-            } else {
-                Logger.shared.warning("Notification permissions denied")
-            }
+            print("Notification authorization \(granted ? "granted" : "denied")")
         }
     }
     
@@ -32,29 +32,22 @@ public class NotificationManager {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = message
-        content.sound = UNNotificationSound.default
+        content.sound = .default
         
-        let request = UNNotificationRequest(
-            identifier: identifier ?? UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
+        let request = UNNotificationRequest(identifier: identifier ?? UUID().uuidString, content: content, trigger: nil)
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                Logger.shared.error("Failed to show notification: \(error.localizedDescription)")
+                print("Error showing notification: \(error.localizedDescription)")
             }
         }
     }
     
     // Show extension-related notifications
     public func showExtensionInstalled(name: String, type: ExtensionType) {
-        let extensionTypeStr = type == .chrome ? "Chrome extension" : "Firefox add-on"
-        showNotification(
-            title: "Extension Installed",
-            message: "\(name) \(extensionTypeStr) has been successfully installed",
-            identifier: "extension-installed-\(UUID().uuidString)"
-        )
+        let typeStr = type == .chrome ? "Chrome" : "Firefox"
+        let message = "The \(name) extension has been installed for \(typeStr)."
+        showNotification(title: "Extension Installed", message: message, identifier: "extension-installed-\(type.rawValue)-\(name)")
     }
     
     public func showExtensionRemoved(name: String) {

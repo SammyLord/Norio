@@ -16,26 +16,40 @@ public class BrowserEngine {
     }
     
     private init() {
+        print("BrowserEngine: Initializing...")
+        
+        // Create configuration with timing
+        let configurationStart = Date()
         configuration = WKWebViewConfiguration()
+        let configurationTime = Date().timeIntervalSince(configurationStart)
+        print("BrowserEngine: WKWebViewConfiguration created in \(configurationTime) seconds")
+        
         setupConfiguration()
+        print("BrowserEngine: Configuration setup complete")
     }
     
     private func setupConfiguration() {
+        print("BrowserEngine: Setting up configuration...")
         // Enable developer tools for macOS
         #if os(macOS)
+        print("BrowserEngine: Enabling developer tools for macOS")
         configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         #endif
         
         // Set default preferences
+        print("BrowserEngine: Setting default preferences")
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
         
         // Allow file access from file URLs
+        print("BrowserEngine: Configuring file access")
         configuration.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         
         // Setup user content controller for extension support
+        print("BrowserEngine: Setting up user content controller")
         let userContentController = WKUserContentController()
         configuration.userContentController = userContentController
+        print("BrowserEngine: Configuration setup completed successfully")
     }
     
     public func createWebView(frame: CGRect = .zero) -> WKWebView {
