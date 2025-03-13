@@ -9,6 +9,8 @@ import AppKit
 import UIKit
 #endif
 
+// Remove the duplicate ExtensionType definition since it should come from NorioCore
+
 public struct BrowserView: View {
     @StateObject private var tabManager = TabManager()
     @State private var urlString: String = ""
@@ -231,8 +233,11 @@ fileprivate final class ExtensionDropdownButton: View {
     var extensions: [ExtensionManager.Extension]
     var onExtensionAction: (ExtensionManager.Extension) -> Void
     var onManageExtensions: () -> Void
+    #if os(iOS)
     var tapHandler: UITapGestureRecognizer?
+    #endif
     
+    #if os(iOS)
     init(showDropdown: Binding<Bool>, extensions: [ExtensionManager.Extension], onExtensionAction: @escaping (ExtensionManager.Extension) -> Void, onManageExtensions: @escaping () -> Void, tapHandler: UITapGestureRecognizer? = nil) {
         self._showDropdown = showDropdown
         self.extensions = extensions
@@ -240,6 +245,14 @@ fileprivate final class ExtensionDropdownButton: View {
         self.onManageExtensions = onManageExtensions
         self.tapHandler = tapHandler
     }
+    #else
+    init(showDropdown: Binding<Bool>, extensions: [ExtensionManager.Extension], onExtensionAction: @escaping (ExtensionManager.Extension) -> Void, onManageExtensions: @escaping () -> Void) {
+        self._showDropdown = showDropdown
+        self.extensions = extensions
+        self.onExtensionAction = onExtensionAction
+        self.onManageExtensions = onManageExtensions
+    }
+    #endif
     
     var body: some View {
         VStack {
@@ -250,7 +263,11 @@ fileprivate final class ExtensionDropdownButton: View {
                     .font(.system(size: 16))
                     .foregroundColor(.primary)
                     .padding(8)
+                    #if os(iOS)
                     .background(Color(.systemBackground))
+                    #else
+                    .background(Color(.windowBackgroundColor))
+                    #endif
                     .clipShape(Circle())
             }
             
@@ -276,7 +293,7 @@ fileprivate final class ExtensionDropdownButton: View {
                     }
                 }
                 .padding(8)
-                .background(Color(.secondarySystemBackground))
+                .background(Color.secondaryBackground)
                 .cornerRadius(8)
                 .shadow(radius: 2)
                 .offset(y: 8)
@@ -1571,6 +1588,14 @@ extension Color {
         return Color(NSColor.windowBackgroundColor)
         #else
         return Color(UIColor.systemBackground)
+        #endif
+    }
+    
+    static var secondaryBackground: Color {
+        #if os(macOS)
+        return Color(NSColor.underPageBackgroundColor)
+        #else
+        return Color(UIColor.secondarySystemBackground)
         #endif
     }
 } 

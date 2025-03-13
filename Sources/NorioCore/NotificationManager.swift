@@ -1,6 +1,13 @@
 import Foundation
 import UserNotifications
-import NorioCore
+
+// We no longer need the explicit reference here as it's now in ModuleLinker.swift
+
+// Local enum definition for ExtensionType
+public enum ExtensionType: String, Codable {
+    case chrome
+    case firefox
+}
 
 public class NotificationManager {
     public static let shared = NotificationManager()
@@ -47,10 +54,10 @@ public class NotificationManager {
     
     // Show extension-related notifications
     public func showExtensionInstalled(name: String, type: ExtensionType) {
-        let extensionType = type == .chrome ? "Chrome extension" : "Firefox add-on"
+        let extensionTypeStr = type == .chrome ? "Chrome extension" : "Firefox add-on"
         showNotification(
             title: "Extension Installed",
-            message: "\(name) \(extensionType) has been successfully installed",
+            message: "\(name) \(extensionTypeStr) has been successfully installed",
             identifier: "extension-installed-\(UUID().uuidString)"
         )
     }

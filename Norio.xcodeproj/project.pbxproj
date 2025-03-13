@@ -13,17 +13,6 @@
 		909A7BF32D83811300BE65CD /* NorioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF22D83811300BE65CD /* NorioCore */; };
 		909A7BF52D83811300BE65CD /* NorioExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF42D83811300BE65CD /* NorioExtensions */; };
 		909A7BF72D83811300BE65CD /* NorioUI in Frameworks */ = {isa = PBXBuildFile; productRef = 909A7BF62D83811300BE65CD /* NorioUI */; };
-		90DECB9D2D837C7800CBC5A5 /* BlockListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */; };
-		90DECB9E2D837C7800CBC5A5 /* BrowserEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */; };
-		90DECB9F2D837C7800CBC5A5 /* ContentBlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */; };
-		90DECBA02D837C7800CBC5A5 /* ExtensionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4062BA30F3000A8B9C0 /* ExtensionManagerTests.swift */; };
-		90DECBA12D837C7800CBC5A5 /* AppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4082BA30F4000A8B9C0 /* AppTests.swift */; };
-		90DECBA22D837C7800CBC5A5 /* BrowserViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40A2BA30F5000A8B9C0 /* BrowserViewTests.swift */; };
-		90DECBA32D837C7800CBC5A5 /* ContentBlockerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40C2BA30F6000A8B9C0 /* ContentBlockerUITests.swift */; };
-		90DECBA42D837C7800CBC5A5 /* ContentBlockingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40E2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift */; };
-		90DECBA52D837C7800CBC5A5 /* ExtensionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4102BA30F8000A8B9C0 /* ExtensionsUITests.swift */; };
-		90DECBA62D837C7800CBC5A5 /* InstallExtensionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4122BA30F9000A8B9C0 /* InstallExtensionUITests.swift */; };
-		90DECBA72D837C7800CBC5A5 /* WebViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4142BA30FA000A8B9C0 /* WebViewTests.swift */; };
 		90DECBB62D837D6300CBC5A5 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB02D837D6300CBC5A5 /* iOSApp.swift */; };
 		90DECBB72D837D6300CBC5A5 /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB32D837D6300CBC5A5 /* WebViewContainer.swift */; };
 		90DECBB82D837D6300CBC5A5 /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAF2D837D6300CBC5A5 /* BrowserView.swift */; };
@@ -35,7 +24,6 @@
 		90DECBBE2D837D6300CBC5A5 /* MacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB12D837D6300CBC5A5 /* MacOSApp.swift */; };
 		90DECBBF2D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
 		90DECBEB2D837EFD00CBC5A5 /* Norio.app in Resources */ = {isa = PBXBuildFile; fileRef = 12A1B2B12A1B3C4D00E1F2G3 /* Norio.app */; };
-		90DECBBF2D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
 		90DECBC02D837D6300CBC5A5 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB02D837D6300CBC5A5 /* iOSApp.swift */; };
 		90DECBC12D837D6300CBC5A5 /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB32D837D6300CBC5A5 /* WebViewContainer.swift */; };
 		90DECBC22D837D6300CBC5A5 /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAF2D837D6300CBC5A5 /* BrowserView.swift */; };
@@ -46,7 +34,6 @@
 		90DECBC72D837D6300CBC5A5 /* ContentBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBA92D837D6300CBC5A5 /* ContentBlocker.swift */; };
 		90DECBC82D837D6300CBC5A5 /* MacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB12D837D6300CBC5A5 /* MacOSApp.swift */; };
 		90DECBC92D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
-		90DECBEB2D837EFD00CBC5A5 /* Norio.app in Resources */ = {isa = PBXBuildFile; fileRef = 12A1B2B12A1B3C4D00E1F2G3 /* Norio.app */; };
 		D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */; };
 		D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */; };
 		D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */; };
@@ -455,17 +442,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */,
-				D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */,
-				D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */,
-				D5E1F4072BA30F3000A8B9C0 /* ExtensionManagerTests.swift in Sources */,
-				D5E1F4092BA30F4000A8B9C0 /* AppTests.swift in Sources */,
-				D5E1F40B2BA30F5000A8B9C0 /* BrowserViewTests.swift in Sources */,
-				D5E1F40D2BA30F6000A8B9C0 /* ContentBlockerUITests.swift in Sources */,
-				D5E1F40F2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift in Sources */,
-				D5E1F4112BA30F8000A8B9C0 /* ExtensionsUITests.swift in Sources */,
-				D5E1F4132BA30F9000A8B9C0 /* InstallExtensionUITests.swift in Sources */,
-				D5E1F4152BA30FA000A8B9C0 /* WebViewTests.swift in Sources */,
 				90DECBB62D837D6300CBC5A5 /* iOSApp.swift in Sources */,
 				90DECBB72D837D6300CBC5A5 /* WebViewContainer.swift in Sources */,
 				90DECBB82D837D6300CBC5A5 /* BrowserView.swift in Sources */,
