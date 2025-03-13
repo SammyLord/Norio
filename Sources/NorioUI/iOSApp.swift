@@ -3,7 +3,8 @@ import NorioCore
 import NorioExtensions
 
 #if os(iOS)
-@main
+// This file is no longer the main entry point
+// The @main attribute has been moved to AppEntry.swift
 public struct NorioiOSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     
@@ -159,5 +160,5 @@ extension AppDelegate {
         }
     }
 }
-#endif
-#endif 
+#endif // End of macCatalyst block
+#endif // End of iOS block 

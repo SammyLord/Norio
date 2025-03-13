@@ -1,10 +1,11 @@
+#if os(macOS)
 import SwiftUI
 import NorioCore
 import NorioExtensions
 
-#if os(macOS)
-@main
-public struct NorioMacApp: App {
+// This file is no longer the main entry point
+// The @main attribute has been moved to AppEntry.swift
+public struct NorioMacOSApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     
     public init() {}

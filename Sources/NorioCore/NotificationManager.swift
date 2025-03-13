@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import NorioCore
 
 public class NotificationManager {
     public static let shared = NotificationManager()

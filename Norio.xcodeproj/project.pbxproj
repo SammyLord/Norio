@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -33,6 +33,8 @@
 		90DECBBC2D837D6300CBC5A5 /* ExtensionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAD2D837D6300CBC5A5 /* ExtensionManager.swift */; };
 		90DECBBD2D837D6300CBC5A5 /* ContentBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBA92D837D6300CBC5A5 /* ContentBlocker.swift */; };
 		90DECBBE2D837D6300CBC5A5 /* MacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB12D837D6300CBC5A5 /* MacOSApp.swift */; };
+		90DECBBF2D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
+		90DECBEB2D837EFD00CBC5A5 /* Norio.app in Resources */ = {isa = PBXBuildFile; fileRef = 12A1B2B12A1B3C4D00E1F2G3 /* Norio.app */; };
 		90DECBBF2D837D6300CBC5A5 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBAA2D837D6300CBC5A5 /* Logger.swift */; };
 		90DECBC02D837D6300CBC5A5 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB02D837D6300CBC5A5 /* iOSApp.swift */; };
 		90DECBC12D837D6300CBC5A5 /* WebViewContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DECBB32D837D6300CBC5A5 /* WebViewContainer.swift */; };
@@ -99,7 +101,6 @@
 		90DECBDB2D837DAC00CBC5A5 /* MacOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacOSApp.swift; sourceTree = "<group>"; };
 		90DECBDC2D837DAC00CBC5A5 /* WebStoreExtensionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebStoreExtensionsView.swift; sourceTree = "<group>"; };
 		90DECBDD2D837DAC00CBC5A5 /* WebViewContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewContainer.swift; sourceTree = "<group>"; };
-		90DECBDF2D837DAC00CBC5A5 /* BrowserEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserEngine.swift; sourceTree = "<group>"; };
 		90DECBE02D837DAC00CBC5A5 /* ContentBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlocker.swift; sourceTree = "<group>"; };
 		90DECBE12D837DAC00CBC5A5 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		90DECBE22D837DAC00CBC5A5 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
@@ -410,7 +411,6 @@
 				};
 			};
 			buildConfigurationList = 12A1B2982A1B3C4D00E1F2G3 /* Build configuration list for PBXProject "Norio" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -421,6 +421,7 @@
 			packageReferences = (
 				909A7BEB2D83810500BE65CD /* XCLocalSwiftPackageReference "../Norio" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 12A1B2A22A1B3C4D00E1F2G3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -482,17 +483,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				90DECB9D2D837C7800CBC5A5 /* BlockListTests.swift in Sources */,
-				90DECB9E2D837C7800CBC5A5 /* BrowserEngineTests.swift in Sources */,
-				90DECB9F2D837C7800CBC5A5 /* ContentBlockerTests.swift in Sources */,
-				90DECBA02D837C7800CBC5A5 /* ExtensionManagerTests.swift in Sources */,
-				90DECBA12D837C7800CBC5A5 /* AppTests.swift in Sources */,
-				90DECBA22D837C7800CBC5A5 /* BrowserViewTests.swift in Sources */,
-				90DECBA32D837C7800CBC5A5 /* ContentBlockerUITests.swift in Sources */,
-				90DECBA42D837C7800CBC5A5 /* ContentBlockingSettingsTests.swift in Sources */,
-				90DECBA52D837C7800CBC5A5 /* ExtensionsUITests.swift in Sources */,
-				90DECBA62D837C7800CBC5A5 /* InstallExtensionUITests.swift in Sources */,
-				90DECBA72D837C7800CBC5A5 /* WebViewTests.swift in Sources */,
 				90DECBC02D837D6300CBC5A5 /* iOSApp.swift in Sources */,
 				90DECBC12D837D6300CBC5A5 /* WebViewContainer.swift in Sources */,
 				90DECBC22D837D6300CBC5A5 /* BrowserView.swift in Sources */,

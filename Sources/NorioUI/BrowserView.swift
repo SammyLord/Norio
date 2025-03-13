@@ -226,105 +226,96 @@ public struct BrowserView: View {
 }
 
 // Extensions Dropdown Button
-private struct ExtensionDropdownButton: View {
+fileprivate final class ExtensionDropdownButton: View {
     @Binding var showDropdown: Bool
-    let extensions: [ExtensionManager.Extension]
-    let onExtensionAction: (ExtensionManager.Extension) -> Void
-    let onManageExtensions: () -> Void
+    var extensions: [ExtensionManager.Extension]
+    var onExtensionAction: (ExtensionManager.Extension) -> Void
+    var onManageExtensions: () -> Void
+    var tapHandler: UITapGestureRecognizer?
+    
+    init(showDropdown: Binding<Bool>, extensions: [ExtensionManager.Extension], onExtensionAction: @escaping (ExtensionManager.Extension) -> Void, onManageExtensions: @escaping () -> Void, tapHandler: UITapGestureRecognizer? = nil) {
+        self._showDropdown = showDropdown
+        self.extensions = extensions
+        self.onExtensionAction = onExtensionAction
+        self.onManageExtensions = onManageExtensions
+        self.tapHandler = tapHandler
+    }
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        VStack {
             Button(action: {
-                showDropdown.toggle()
+                self.showDropdown.toggle()
             }) {
                 Image(systemName: "puzzlepiece.extension")
-                    .frame(width: 32, height: 32)
+                    .font(.system(size: 16))
+                    .foregroundColor(.primary)
+                    .padding(8)
+                    .background(Color(.systemBackground))
+                    .clipShape(Circle())
             }
             
             if showDropdown {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(extensions) { extensionItem in
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(extensions, id: \.id) { extensionItem in
                         ExtensionDropdownItem(extensionItem: extensionItem) {
-                            onExtensionAction(extensionItem)
-                            showDropdown = false
+                            self.onExtensionAction(extensionItem)
+                            self.showDropdown = false
                         }
                     }
                     
                     Divider()
                     
                     Button(action: {
-                        onManageExtensions()
-                        showDropdown = false
+                        self.onManageExtensions()
+                        self.showDropdown = false
                     }) {
-                        HStack {
-                            Text("Manage Extensions")
-                            Spacer()
-                            Image(systemName: "gear")
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        Text("Manage Extensions")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                            .padding(.vertical, 4)
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
-                .background(Color.background)
+                .padding(8)
+                .background(Color(.secondarySystemBackground))
                 .cornerRadius(8)
-                .shadow(radius: 3)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                )
-                .offset(y: 40)
-                .transition(.opacity)
-                .zIndex(1)
-                .onTapGesture {
-                    // Prevent tap from closing the dropdown
-                }
-                .onAppear {
-                    // Add a global tap gesture to close the dropdown when tapping elsewhere
-                    #if os(iOS)
-                    setupTapHandler()
-                    #endif
-                }
-                .onDisappear {
-                    // Remove the global tap gesture
-                    #if os(iOS)
-                    tapHandler = nil
-                    #endif
-                }
+                .shadow(radius: 2)
+                .offset(y: 8)
             }
         }
-        .frame(width: 32, height: 32)
-    }
-    
-    #if os(iOS)
-    // Using a class-based coordinator for Objective-C compatibility
-    private final class TapHandler: NSObject {
-        var onTap: () -> Void
-        
-        init(onTap: @escaping () -> Void) {
-            self.onTap = onTap
-            super.init()
-        }
-        
-        @objc func handleTap() {
-            onTap()
+        .onAppear {
+            self.setupTapHandler()
         }
     }
     
-    private var tapHandler: TapHandler?
-    
-    private func setupTapHandler() {
-        tapHandler = TapHandler(onTap: { [weak showDropdown] in
-            showDropdown?.wrappedValue = false
-        })
-        
-        let tapGesture = UITapGestureRecognizer(target: tapHandler, action: #selector(TapHandler.handleTap))
-        tapGesture.cancelsTouchesInView = false
-        tapGesture.name = "ExtensionDropdownCloseTap"
-        UIApplication.shared.windows.first?.addGestureRecognizer(tapGesture)
+    func setupTapHandler() {
+        #if os(iOS)
+        if tapHandler == nil {
+            let tapHandler = UITapGestureRecognizer()
+            tapHandler.addTarget(self, action: #selector(TapHandlerHelper.handleTap))
+            tapHandler.cancelsTouchesInView = false
+            self.tapHandler = tapHandler
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                TapHandlerHelper.shared.showDropdown = self._showDropdown
+                window.addGestureRecognizer(tapHandler)
+            }
+        }
+        #endif
     }
-    #endif
 }
+
+#if os(iOS)
+// Helper class to handle tap gestures
+fileprivate class TapHandlerHelper: NSObject {
+    static let shared = TapHandlerHelper()
+    var showDropdown: Binding<Bool>?
+    
+    @objc func handleTap() {
+        showDropdown?.wrappedValue = false
+    }
+}
+#endif
 
 // Extension Dropdown Item
 private struct ExtensionDropdownItem: View {
@@ -619,8 +610,8 @@ private struct ContentBlockingSettingsView: View {
                 Button(action: resetToDefaults) {
                     Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
                         .foregroundColor(.red)
-                }
-                .accessibilityIdentifier("resetToDefaultsButton")
+                    }
+                    .accessibilityIdentifier("resetToDefaultsButton")
             }
             
             if let lastUpdated = lastUpdated {

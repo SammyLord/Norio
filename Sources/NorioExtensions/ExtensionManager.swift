@@ -309,7 +309,7 @@ public class ExtensionManager {
         self.notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
         
         // Show notification
-        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: .chrome)
+        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: ExtensionType.chrome)
         
         completion(.success(extensionObj))
     }
@@ -422,7 +422,7 @@ public class ExtensionManager {
         self.notificationCenter.post(name: Self.extensionsUpdatedNotification, object: nil)
         
         // Show notification
-        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: .firefox)
+        NotificationManager.shared.showExtensionInstalled(name: extensionName, type: ExtensionType.firefox)
         
         completion(.success(extensionObj))
     }
