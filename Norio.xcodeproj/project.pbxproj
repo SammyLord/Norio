@@ -15,6 +15,17 @@
 		12A1B2CA2A1B3C4D00E1F2G3 /* NorioCore in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C42A1B3C4D00E1F2G3 /* NorioCore */; };
 		12A1B2CB2A1B3C4D00E1F2G3 /* NorioUI in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C62A1B3C4D00E1F2G3 /* NorioUI */; };
 		12A1B2CC2A1B3C4D00E1F2G3 /* NorioExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 12A1B2C82A1B3C4D00E1F2G3 /* NorioExtensions */; };
+		D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */; };
+		D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */; };
+		D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */; };
+		D5E1F4072BA30F3000A8B9C0 /* ExtensionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4062BA30F3000A8B9C0 /* ExtensionManagerTests.swift */; };
+		D5E1F4092BA30F4000A8B9C0 /* AppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4082BA30F4000A8B9C0 /* AppTests.swift */; };
+		D5E1F40B2BA30F5000A8B9C0 /* BrowserViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40A2BA30F5000A8B9C0 /* BrowserViewTests.swift */; };
+		D5E1F40D2BA30F6000A8B9C0 /* ContentBlockerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40C2BA30F6000A8B9C0 /* ContentBlockerUITests.swift */; };
+		D5E1F40F2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F40E2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift */; };
+		D5E1F4112BA30F8000A8B9C0 /* ExtensionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4102BA30F8000A8B9C0 /* ExtensionsUITests.swift */; };
+		D5E1F4132BA30F9000A8B9C0 /* InstallExtensionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4122BA30F9000A8B9C0 /* InstallExtensionUITests.swift */; };
+		D5E1F4152BA30FA000A8B9C0 /* WebViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E1F4142BA30FA000A8B9C0 /* WebViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +34,17 @@
 		12A1B2BF2A1B3C4D00E1F2G3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		12A1B2CE2A1B3C4D00E1F2G3 /* macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = macOS.entitlements; sourceTree = "<group>"; };
 		12A1B2CF2A1B3C4D00E1F2G3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockListTests.swift; sourceTree = "<group>"; };
+		D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserEngineTests.swift; sourceTree = "<group>"; };
+		D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockerTests.swift; sourceTree = "<group>"; };
+		D5E1F4062BA30F3000A8B9C0 /* ExtensionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionManagerTests.swift; sourceTree = "<group>"; };
+		D5E1F4082BA30F4000A8B9C0 /* AppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTests.swift; sourceTree = "<group>"; };
+		D5E1F40A2BA30F5000A8B9C0 /* BrowserViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserViewTests.swift; sourceTree = "<group>"; };
+		D5E1F40C2BA30F6000A8B9C0 /* ContentBlockerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockerUITests.swift; sourceTree = "<group>"; };
+		D5E1F40E2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBlockingSettingsTests.swift; sourceTree = "<group>"; };
+		D5E1F4102BA30F8000A8B9C0 /* ExtensionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionsUITests.swift; sourceTree = "<group>"; };
+		D5E1F4122BA30F9000A8B9C0 /* InstallExtensionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallExtensionUITests.swift; sourceTree = "<group>"; };
+		D5E1F4142BA30FA000A8B9C0 /* WebViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +77,7 @@
 				12A1B2992A1B3C4D00E1F2G3 /* Shared */,
 				12A1B2A32A1B3C4D00E1F2G3 /* macOS */,
 				12A1B2B22A1B3C4D00E1F2G3 /* iOS */,
+				D5E1F3FC2BA30E8000A8B9C0 /* Tests */,
 				12A1B2A22A1B3C4D00E1F2G3 /* Products */,
 				12A1B2C32A1B3C4D00E1F2G3 /* Frameworks */,
 			);
@@ -98,6 +121,48 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D5E1F3FC2BA30E8000A8B9C0 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				D5E1F3FD2BA30E9000A8B9C0 /* NorioCoreTests */,
+				D5E1F3FE2BA30EA000A8B9C0 /* NorioExtensionsTests */,
+				D5E1F3FF2BA30EB000A8B9C0 /* NorioUITests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		D5E1F3FD2BA30E9000A8B9C0 /* NorioCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				D5E1F4002BA30F0000A8B9C0 /* BlockListTests.swift */,
+				D5E1F4022BA30F1000A8B9C0 /* BrowserEngineTests.swift */,
+				D5E1F4042BA30F2000A8B9C0 /* ContentBlockerTests.swift */,
+			);
+			path = NorioCoreTests;
+			sourceTree = "<group>";
+		};
+		D5E1F3FE2BA30EA000A8B9C0 /* NorioExtensionsTests */ = {
+			isa = PBXGroup;
+			children = (
+				D5E1F4062BA30F3000A8B9C0 /* ExtensionManagerTests.swift */,
+			);
+			path = NorioExtensionsTests;
+			sourceTree = "<group>";
+		};
+		D5E1F3FF2BA30EB000A8B9C0 /* NorioUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D5E1F4082BA30F4000A8B9C0 /* AppTests.swift */,
+				D5E1F40A2BA30F5000A8B9C0 /* BrowserViewTests.swift */,
+				D5E1F40C2BA30F6000A8B9C0 /* ContentBlockerUITests.swift */,
+				D5E1F40E2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift */,
+				D5E1F4102BA30F8000A8B9C0 /* ExtensionsUITests.swift */,
+				D5E1F4122BA30F9000A8B9C0 /* InstallExtensionUITests.swift */,
+				D5E1F4142BA30FA000A8B9C0 /* WebViewTests.swift */,
+			);
+			path = NorioUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -208,6 +273,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */,
+				D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */,
+				D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */,
+				D5E1F4072BA30F3000A8B9C0 /* ExtensionManagerTests.swift in Sources */,
+				D5E1F4092BA30F4000A8B9C0 /* AppTests.swift in Sources */,
+				D5E1F40B2BA30F5000A8B9C0 /* BrowserViewTests.swift in Sources */,
+				D5E1F40D2BA30F6000A8B9C0 /* ContentBlockerUITests.swift in Sources */,
+				D5E1F40F2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift in Sources */,
+				D5E1F4112BA30F8000A8B9C0 /* ExtensionsUITests.swift in Sources */,
+				D5E1F4132BA30F9000A8B9C0 /* InstallExtensionUITests.swift in Sources */,
+				D5E1F4152BA30FA000A8B9C0 /* WebViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,6 +291,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5E1F4012BA30F0000A8B9C0 /* BlockListTests.swift in Sources */,
+				D5E1F4032BA30F1000A8B9C0 /* BrowserEngineTests.swift in Sources */,
+				D5E1F4052BA30F2000A8B9C0 /* ContentBlockerTests.swift in Sources */,
+				D5E1F4072BA30F3000A8B9C0 /* ExtensionManagerTests.swift in Sources */,
+				D5E1F4092BA30F4000A8B9C0 /* AppTests.swift in Sources */,
+				D5E1F40B2BA30F5000A8B9C0 /* BrowserViewTests.swift in Sources */,
+				D5E1F40D2BA30F6000A8B9C0 /* ContentBlockerUITests.swift in Sources */,
+				D5E1F40F2BA30F7000A8B9C0 /* ContentBlockingSettingsTests.swift in Sources */,
+				D5E1F4112BA30F8000A8B9C0 /* ExtensionsUITests.swift in Sources */,
+				D5E1F4132BA30F9000A8B9C0 /* InstallExtensionUITests.swift in Sources */,
+				D5E1F4152BA30FA000A8B9C0 /* WebViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
