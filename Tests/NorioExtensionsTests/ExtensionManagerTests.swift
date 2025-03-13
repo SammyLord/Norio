@@ -30,48 +30,72 @@ final class ExtensionManagerTests: XCTestCase {
     }
     
     func testExtensionInitialization() {
-        let manifestPath = URL(fileURLWithPath: "/tmp/manifest.json")
-        let iconPath = URL(fileURLWithPath: "/tmp/icon.png")
-        let storeURL = URL(string: "https://chrome.google.com/webstore/detail/test-extension")
+        // Create test manifest JSON
+        let manifestDict: [String: Any] = [
+            "name": "Test Extension",
+            "description": "A test extension",
+            "version": "1.0.0"
+        ]
         
-        let extension = ExtensionManager.Extension(
-            id: "test-id",
-            name: "Test Extension",
-            version: "1.0.0",
-            description: "A test extension",
-            type: .chrome,
-            enabled: true,
-            manifestPath: manifestPath,
-            iconPath: iconPath,
-            storeURL: storeURL
+        // Create content script
+        let contentScript = ExtensionManager.ContentScript(
+            js: ["content.js"],
+            css: [],
+            matches: ["*://*/*"],
+            runAt: .documentEnd
         )
         
-        XCTAssertEqual(extension.id, "test-id")
-        XCTAssertEqual(extension.name, "Test Extension")
-        XCTAssertEqual(extension.version, "1.0.0")
-        XCTAssertEqual(extension.description, "A test extension")
-        XCTAssertEqual(extension.type, .chrome)
-        XCTAssertTrue(extension.enabled)
-        XCTAssertEqual(extension.manifestPath, manifestPath)
-        XCTAssertEqual(extension.iconPath, iconPath)
-        XCTAssertEqual(extension.storeURL, storeURL)
+        let testExtension = ExtensionManager.Extension(
+            id: "test-id",
+            name: "Test Extension",
+            description: "A test extension",
+            version: "1.0.0",
+            type: .chrome,
+            enabled: true,
+            manifestJson: manifestDict,
+            entryPoints: ["background.js"],
+            contentScripts: [contentScript],
+            permissions: ["tabs"],
+            optionalPermissions: []
+        )
+        
+        XCTAssertEqual(testExtension.id, "test-id")
+        XCTAssertEqual(testExtension.name, "Test Extension")
+        XCTAssertEqual(testExtension.version, "1.0.0")
+        XCTAssertEqual(testExtension.description, "A test extension")
+        XCTAssertEqual(testExtension.type, .chrome)
+        XCTAssertTrue(testExtension.enabled)
+        XCTAssertEqual(testExtension.manifestJson["name"] as? String, "Test Extension")
+        XCTAssertEqual(testExtension.entryPoints, ["background.js"])
+        XCTAssertEqual(testExtension.contentScripts.count, 1)
+        XCTAssertEqual(testExtension.permissions, ["tabs"])
     }
     
     func testDisabledExtension() {
-        let manifestPath = URL(fileURLWithPath: "/tmp/manifest.json")
+        // Create test manifest JSON
+        let manifestDict: [String: Any] = [
+            "name": "Disabled Extension",
+            "description": "A disabled extension",
+            "version": "1.0.0"
+        ]
         
-        let extension = ExtensionManager.Extension(
+        let testExtension = ExtensionManager.Extension(
             id: "disabled-ext",
             name: "Disabled Extension",
-            version: "1.0.0",
             description: "A disabled extension",
+            version: "1.0.0",
             type: .firefox,
             enabled: false,
-            manifestPath: manifestPath
+            manifestJson: manifestDict,
+            entryPoints: nil,
+            contentScripts: [],
+            permissions: [],
+            optionalPermissions: []
         )
         
-        XCTAssertFalse(extension.enabled, "Extension should be disabled")
-        XCTAssertNil(extension.iconPath, "Icon path should be nil")
-        XCTAssertNil(extension.storeURL, "Store URL should be nil")
+        XCTAssertFalse(testExtension.enabled, "Extension should be disabled")
+        XCTAssertEqual(testExtension.type, .firefox)
+        XCTAssertNil(testExtension.entryPoints)
+        XCTAssertTrue(testExtension.contentScripts.isEmpty)
     }
 } 

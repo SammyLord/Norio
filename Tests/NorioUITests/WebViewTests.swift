@@ -138,7 +138,7 @@ class WebViewTests: XCTestCase {
         wait(for: [expectation], timeout: timeout + 1.0)
         
         // Switch back to the first tab
-        let tabs = app.otherElements.matching(identifier: /tab-.*/)
+        let tabs = app.otherElements.matching(identifier: "tab-.*")
         XCTAssertEqual(tabs.count, 2, "There should be two tabs")
         
         tabs.element(boundBy: 0).tap()

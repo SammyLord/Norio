@@ -167,7 +167,7 @@ class ExtensionsUITests: XCTestCase {
         
         if !noExtensionsMessage.exists {
             // Find an extension item
-            let extensionItem = app.otherElements.matching(identifier: /extension-.*/).firstMatch
+            let extensionItem = app.otherElements.matching(identifier: "extension-.*").firstMatch
             
             if extensionItem.exists {
                 // Long press to open context menu

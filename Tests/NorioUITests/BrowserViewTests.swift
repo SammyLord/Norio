@@ -87,25 +87,25 @@ class BrowserViewUITests: XCTestCase {
         XCTAssertTrue(newTabButton.exists, "New tab button should exist")
         
         // Initial tab should exist
-        let initialTab = app.otherElements.matching(identifier: /tab-.*/).firstMatch
+        let initialTab = app.otherElements.matching(identifier: "tab-.*").firstMatch
         XCTAssertTrue(initialTab.exists, "Initial tab should exist")
         
         // Click new tab button to create a second tab
         newTabButton.tap()
         
         // There should now be two tabs
-        let tabCount = app.otherElements.matching(identifier: /tab-.*/).count
+        let tabCount = app.otherElements.matching(identifier: "tab-.*").count
         XCTAssertEqual(tabCount, 2, "There should be two tabs after creating a new one")
         
         // Select the first tab
-        app.otherElements.matching(identifier: /tab-.*/).element(boundBy: 0).tap()
+        app.otherElements.matching(identifier: "tab-.*").element(boundBy: 0).tap()
         
         // Close the current tab
         let closeTabButton = app.buttons["closeTabButton"]
         closeTabButton.tap()
         
         // There should now be one tab
-        let newTabCount = app.otherElements.matching(identifier: /tab-.*/).count
+        let newTabCount = app.otherElements.matching(identifier: "tab-.*").count
         XCTAssertEqual(newTabCount, 1, "There should be one tab after closing one")
     }
     

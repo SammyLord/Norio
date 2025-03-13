@@ -26,11 +26,11 @@ let package = Package(
             name: "NorioCore",
             dependencies: []),
         .target(
-            name: "NorioUI",
-            dependencies: ["NorioCore"]),
-        .target(
             name: "NorioExtensions",
             dependencies: ["NorioCore"]),
+        .target(
+            name: "NorioUI",
+            dependencies: ["NorioCore", "NorioExtensions"]),
         .testTarget(
             name: "NorioCoreTests",
             dependencies: ["NorioCore"]),

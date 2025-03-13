@@ -122,7 +122,12 @@ extension UIApplication {
         
         // Get installed extensions
         let extensions = ExtensionManager.shared.getInstalledExtensions()
-        var extensionCommands: [UIMenuElement] = [manageExtensions, UIMenu.Separator()]
+        var extensionCommands: [UIMenuElement] = [manageExtensions]
+        
+        // Add a separator using an inline menu
+        if !extensions.isEmpty {
+            extensionCommands.append(UIMenu(title: "", options: .displayInline, children: []))
+        }
         
         for ext in extensions {
             let command = UICommand(

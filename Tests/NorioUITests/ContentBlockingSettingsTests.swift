@@ -104,7 +104,7 @@ class ContentBlockingSettingsTests: XCTestCase {
         resetButton.tap()
         
         // Check for default block lists (this is a basic check - in a real test you might verify specific lists exist)
-        let blockLists = app.otherElements.matching(identifier: /blockList-.*/)
+        let blockLists = app.otherElements.matching(identifier: "blockList-.*")
         XCTAssertTrue(blockLists.count > 0, "Default block lists should be displayed after reset")
     }
 } 
