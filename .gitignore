@@ -30,6 +30,8 @@ xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
 
+Norio.app/
+
 ## App packaging
 *.ipa
 *.dSYM.zip
