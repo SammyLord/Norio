@@ -3,7 +3,6 @@ import UserNotifications
 
 // ExtensionType is defined in ExtensionTypes.swift (part of the same module)
 // Explicitly importing it to ensure it's accessible
-import NorioCore
 
 // No need to import or create a typealias since both are in the same module
 

@@ -228,31 +228,11 @@ public struct BrowserView: View {
 }
 
 // Extensions Dropdown Button
-fileprivate final class ExtensionDropdownButton: View {
+fileprivate struct ExtensionDropdownButton: View {
     @Binding var showDropdown: Bool
     var extensions: [ExtensionManager.Extension]
     var onExtensionAction: (ExtensionManager.Extension) -> Void
     var onManageExtensions: () -> Void
-    #if os(iOS)
-    var tapHandler: UITapGestureRecognizer?
-    #endif
-    
-    #if os(iOS)
-    init(showDropdown: Binding<Bool>, extensions: [ExtensionManager.Extension], onExtensionAction: @escaping (ExtensionManager.Extension) -> Void, onManageExtensions: @escaping () -> Void, tapHandler: UITapGestureRecognizer? = nil) {
-        self._showDropdown = showDropdown
-        self.extensions = extensions
-        self.onExtensionAction = onExtensionAction
-        self.onManageExtensions = onManageExtensions
-        self.tapHandler = tapHandler
-    }
-    #else
-    init(showDropdown: Binding<Bool>, extensions: [ExtensionManager.Extension], onExtensionAction: @escaping (ExtensionManager.Extension) -> Void, onManageExtensions: @escaping () -> Void) {
-        self._showDropdown = showDropdown
-        self.extensions = extensions
-        self.onExtensionAction = onExtensionAction
-        self.onManageExtensions = onManageExtensions
-    }
-    #endif
     
     var body: some View {
         VStack {
@@ -306,18 +286,7 @@ fileprivate final class ExtensionDropdownButton: View {
     
     func setupTapHandler() {
         #if os(iOS)
-        if tapHandler == nil {
-            let tapHandler = UITapGestureRecognizer()
-            tapHandler.addTarget(self, action: #selector(TapHandlerHelper.handleTap))
-            tapHandler.cancelsTouchesInView = false
-            self.tapHandler = tapHandler
-            
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let window = windowScene.windows.first {
-                TapHandlerHelper.shared.showDropdown = self._showDropdown
-                window.addGestureRecognizer(tapHandler)
-            }
-        }
+        TapHandlerHelper.shared.setup(for: _showDropdown)
         #endif
     }
 }
@@ -326,7 +295,22 @@ fileprivate final class ExtensionDropdownButton: View {
 // Helper class to handle tap gestures
 fileprivate class TapHandlerHelper: NSObject {
     static let shared = TapHandlerHelper()
-    var showDropdown: Binding<Bool>?
+    private var showDropdown: Binding<Bool>?
+    private var tapHandler: UITapGestureRecognizer?
+    
+    func setup(for showDropdown: Binding<Bool>) {
+        self.showDropdown = showDropdown
+        if self.tapHandler == nil {
+            let tapHandler = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            tapHandler.cancelsTouchesInView = false
+            self.tapHandler = tapHandler
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                window.addGestureRecognizer(tapHandler)
+            }
+        }
+    }
     
     @objc func handleTap() {
         showDropdown?.wrappedValue = false

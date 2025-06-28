@@ -1,0 +1,189 @@
+{
+  "dependencies" : [
+
+  ],
+  "manifest_display_name" : "Norio",
+  "name" : "Norio",
+  "path" : "/Volumes/4TerryBite/HomeFolders/Sam/MacMiniM4/Norio",
+  "platforms" : [
+    {
+      "name" : "macos",
+      "version" : "13.0"
+    },
+    {
+      "name" : "ios",
+      "version" : "17.0"
+    }
+  ],
+  "products" : [
+    {
+      "name" : "Norio",
+      "targets" : [
+        "Norio"
+      ],
+      "type" : {
+        "executable" : null
+      }
+    },
+    {
+      "name" : "NorioCore",
+      "targets" : [
+        "NorioCore"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    },
+    {
+      "name" : "NorioUI",
+      "targets" : [
+        "NorioUI"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    },
+    {
+      "name" : "NorioExtensions",
+      "targets" : [
+        "NorioExtensions"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    }
+  ],
+  "targets" : [
+    {
+      "c99name" : "NorioUITests",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioUITests",
+      "path" : "Tests/NorioUITests",
+      "sources" : [
+        "AppTests.swift",
+        "BrowserViewTests.swift",
+        "ContentBlockerUITests.swift",
+        "ContentBlockingSettingsTests.swift",
+        "ExtensionsUITests.swift",
+        "InstallExtensionUITests.swift",
+        "WebViewTests.swift"
+      ],
+      "target_dependencies" : [
+        "NorioUI"
+      ],
+      "type" : "test"
+    },
+    {
+      "c99name" : "NorioUI",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioUI",
+      "path" : "Sources/NorioUI",
+      "product_memberships" : [
+        "Norio",
+        "NorioUI"
+      ],
+      "sources" : [
+        "AppEntry.swift",
+        "BrowserView.swift",
+        "ModuleImports.swift",
+        "WebStoreExtensionsView.swift",
+        "WebViewContainer.swift"
+      ],
+      "target_dependencies" : [
+        "NorioCore",
+        "NorioExtensions"
+      ],
+      "type" : "library"
+    },
+    {
+      "c99name" : "NorioExtensionsTests",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioExtensionsTests",
+      "path" : "Tests/NorioExtensionsTests",
+      "sources" : [
+        "ExtensionManagerTests.swift"
+      ],
+      "target_dependencies" : [
+        "NorioExtensions"
+      ],
+      "type" : "test"
+    },
+    {
+      "c99name" : "NorioExtensions",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioExtensions",
+      "path" : "Sources/NorioExtensions",
+      "product_memberships" : [
+        "Norio",
+        "NorioUI",
+        "NorioExtensions"
+      ],
+      "sources" : [
+        "ExtensionManager.swift"
+      ],
+      "target_dependencies" : [
+        "NorioCore"
+      ],
+      "type" : "library"
+    },
+    {
+      "c99name" : "NorioCoreTests",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioCoreTests",
+      "path" : "Tests/NorioCoreTests",
+      "sources" : [
+        "BlockListTests.swift",
+        "BrowserEngineTests.swift",
+        "ContentBlockerTests.swift"
+      ],
+      "target_dependencies" : [
+        "NorioCore"
+      ],
+      "type" : "test"
+    },
+    {
+      "c99name" : "NorioCore",
+      "module_type" : "SwiftTarget",
+      "name" : "NorioCore",
+      "path" : "Sources/NorioCore",
+      "product_memberships" : [
+        "Norio",
+        "NorioCore",
+        "NorioUI",
+        "NorioExtensions"
+      ],
+      "sources" : [
+        "BrowserEngine.swift",
+        "ContentBlocker.swift",
+        "ExtensionTypes.swift",
+        "Logger.swift",
+        "ModuleLinker.swift",
+        "NotificationManager.swift"
+      ],
+      "type" : "library"
+    },
+    {
+      "c99name" : "Norio",
+      "module_type" : "SwiftTarget",
+      "name" : "Norio",
+      "path" : "Sources/Norio",
+      "product_memberships" : [
+        "Norio"
+      ],
+      "sources" : [
+        "main.swift"
+      ],
+      "target_dependencies" : [
+        "NorioUI"
+      ],
+      "type" : "executable"
+    }
+  ],
+  "tools_version" : "5.9"
+}

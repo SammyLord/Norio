@@ -6,11 +6,12 @@ import NorioExtensions
 // It conditionally imports the appropriate app struct based on the platform
 
 #if os(iOS)
-@main
-struct NorioApp: App {
+public struct NorioiOS: App {
     @UIApplicationDelegateAdaptor(iOSAppDelegate.self) private var appDelegate
     
-    var body: some Scene {
+    public init() {}
+    
+    public var body: some Scene {
         WindowGroup {
             BrowserView()
                 .edgesIgnoringSafeArea(.bottom)
@@ -48,7 +49,7 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate {
             BrowserEngine.shared.contentBlockingEnabled = enabled
             
             // Force load the block lists
-            ContentBlocker.shared.getAvailableBlockLists()
+            _ = ContentBlocker.shared.getAvailableBlockLists()
         }
     }
     
@@ -86,11 +87,12 @@ class iOSAppDelegate: NSObject, UIApplicationDelegate {
 }
 
 #elseif os(macOS)
-@main
-struct NorioApp: App {
+public struct NorioMac: App {
     @NSApplicationDelegateAdaptor(MacAppDelegate.self) private var appDelegate
     
-    var body: some Scene {
+    public init() {}
+    
+    public var body: some Scene {
         WindowGroup {
             BrowserView()
                 .frame(minWidth: 800, minHeight: 600)
@@ -153,7 +155,7 @@ class MacAppDelegate: NSObject, NSApplicationDelegate {
             BrowserEngine.shared.contentBlockingEnabled = enabled
             
             // Force load the block lists
-            ContentBlocker.shared.getAvailableBlockLists()
+            _ = ContentBlocker.shared.getAvailableBlockLists()
         }
     }
     

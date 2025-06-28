@@ -9,9 +9,7 @@ public class BrowserEngine {
     // Added settings for content blocking
     public var contentBlockingEnabled: Bool = true {
         didSet {
-            if let contentBlocker = ContentBlocker.shared as? ContentBlocker {
-                contentBlocker.isEnabled = contentBlockingEnabled
-            }
+            ContentBlocker.shared.isEnabled = contentBlockingEnabled
         }
     }
     
@@ -56,9 +54,8 @@ public class BrowserEngine {
         let webView = WKWebView(frame: frame, configuration: configuration)
         
         // Apply content blocking if enabled
-        if contentBlockingEnabled, 
-           let contentBlocker = ContentBlocker.shared as? ContentBlocker {
-            contentBlocker.applyRulesToWebView(webView)
+        if contentBlockingEnabled {
+            ContentBlocker.shared.applyRulesToWebView(webView)
         }
         
         return webView
@@ -81,7 +78,7 @@ public class BrowserEngine {
 // Tab management
 public extension BrowserEngine {
     // Tab model
-    public class Tab: Identifiable {
+    class Tab: Identifiable {
         public let id: UUID
         public let webView: WKWebView
         public var title: String = ""

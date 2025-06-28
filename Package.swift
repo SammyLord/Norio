@@ -8,6 +8,9 @@ let package = Package(
         .iOS(.v17),
     ],
     products: [
+        .executable(
+            name: "Norio",
+            targets: ["Norio"]),
         .library(
             name: "NorioCore",
             targets: ["NorioCore"]),
@@ -22,6 +25,9 @@ let package = Package(
         // Dependencies here
     ],
     targets: [
+        .executableTarget(
+            name: "Norio",
+            dependencies: ["NorioUI"]),
         .target(
             name: "NorioCore",
             dependencies: []),
