@@ -833,6 +833,7 @@ private struct AddBlockListView: View {
 
 // Extensions View
 private struct ExtensionsView: View {
+    @Environment(\.presentationMode) var presentationMode
     @State private var extensions: [ExtensionManager.Extension] = []
     @State private var showExtensionInstaller: Bool = false
     @State private var selectedExtensionType: ExtensionType = .chrome
@@ -889,6 +890,13 @@ private struct ExtensionsView: View {
                     }
                     .accessibilityIdentifier("addExtensionButton")
                 }
+                #if os(macOS)
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                #endif
             }
             .sheet(isPresented: $showExtensionInstaller) {
                 NavigationView {
@@ -920,6 +928,7 @@ private struct ExtensionsView: View {
                 loadExtensions()
             }
         }
+        .frame(minWidth: 500, minHeight: 400)
     }
     
     private func loadExtensions() {
