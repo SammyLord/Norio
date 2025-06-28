@@ -5,6 +5,110 @@ import NorioExtensions
 
 #if os(macOS)
 import AppKit
+
+// Custom TextField wrapper for macOS that properly handles first responder
+struct FocusableTextField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+    var onCommit: () -> Void
+    @Binding var isFocused: Bool
+    
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = NSTextField()
+        textField.placeholderString = placeholder
+        textField.delegate = context.coordinator
+        textField.target = context.coordinator
+        textField.action = #selector(Coordinator.textFieldAction(_:))
+        
+        // Store reference in coordinator
+        context.coordinator.textField = textField
+        
+        // Listen for window becoming key
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.windowDidBecomeKey),
+            name: NSWindow.didBecomeKeyNotification,
+            object: nil
+        )
+        
+        return textField
+    }
+    
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        // Only update the text if it's different to avoid cursor/selection issues
+        if nsView.stringValue != text {
+            let currentSelection = nsView.currentEditor()?.selectedRange
+            nsView.stringValue = text
+            
+            // Restore cursor position if we had one
+            if let selection = currentSelection, let editor = nsView.currentEditor() {
+                let newLocation = min(selection.location, text.count)
+                editor.selectedRange = NSRange(location: newLocation, length: 0)
+            }
+        }
+        
+        // Only set first responder once when we should be focused
+        if isFocused && nsView.window?.firstResponder != nsView && !context.coordinator.hasSetFirstResponder {
+            context.coordinator.hasSetFirstResponder = true
+            DispatchQueue.main.async {
+                nsView.window?.makeFirstResponder(nsView)
+                // Move cursor to end instead of selecting all
+                if let editor = nsView.currentEditor() {
+                    editor.selectedRange = NSRange(location: nsView.stringValue.count, length: 0)
+                }
+            }
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: FocusableTextField
+        weak var textField: NSTextField?
+        var hasSetFirstResponder = false
+        
+        init(_ parent: FocusableTextField) {
+            self.parent = parent
+        }
+        
+        @objc func textFieldAction(_ sender: NSTextField) {
+            parent.text = sender.stringValue
+            parent.onCommit()
+        }
+        
+        @objc func windowDidBecomeKey(_ notification: Notification) {
+            if parent.isFocused, let textField = textField {
+                DispatchQueue.main.async {
+                    textField.window?.makeFirstResponder(textField)
+                }
+            }
+        }
+        
+        func controlTextDidChange(_ obj: Notification) {
+            if let textField = obj.object as? NSTextField {
+                // Only update if the text actually changed to prevent binding loops
+                if parent.text != textField.stringValue {
+                    parent.text = textField.stringValue
+                }
+            }
+        }
+        
+        func controlTextDidBeginEditing(_ obj: Notification) {
+            parent.isFocused = true
+        }
+        
+        func controlTextDidEndEditing(_ obj: Notification) {
+            parent.isFocused = false
+            hasSetFirstResponder = false
+        }
+        
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+    }
+}
 #else
 import UIKit
 #endif
@@ -21,6 +125,12 @@ public struct BrowserView: View {
     @State private var showHistory: Bool = false
     @State private var showExtensionsDropdown: Bool = false
     @State private var installedExtensions: [ExtensionManager.Extension] = []
+    @State private var addressBarFocused: Bool = false
+    
+    private enum Field: Hashable {
+        case addressBar
+    }
+    @FocusState private var focusedField: Field?
     
     public init() {}
     
@@ -69,9 +179,20 @@ public struct BrowserView: View {
                         .font(.caption)
                         .accessibilityIdentifier("secureIndicator")
                     
+                    #if os(macOS)
+                    FocusableTextField(
+                        text: $urlString,
+                        placeholder: "Search or enter website name",
+                        onCommit: loadUrl,
+                        isFocused: $addressBarFocused
+                    )
+                    .accessibilityIdentifier("addressBar")
+                    #else
                     TextField("Search or enter website name", text: $urlString, onCommit: loadUrl)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .focused($focusedField, equals: .addressBar)
                         .accessibilityIdentifier("addressBar")
+                    #endif
                 }
                 .padding(.horizontal, 8)
                 .accessibilityIdentifier("addressBarContainer")
@@ -184,8 +305,20 @@ public struct BrowserView: View {
             HistoryView()
         }
         .onAppear {
+            #if os(macOS)
+            addressBarFocused = true
+            #else
+            focusedField = .addressBar
+            #endif
             // Load installed extensions when the view appears
             installedExtensions = ExtensionManager.shared.getInstalledExtensions()
+        }
+        .onChange(of: tabManager.currentTab) { _ in
+            #if os(macOS)
+            addressBarFocused = true
+            #else
+            focusedField = .addressBar
+            #endif
         }
     }
     
@@ -204,7 +337,7 @@ public struct BrowserView: View {
         }
         // Treat as search query
         else {
-            let searchEngine = BrowserEngine.SearchEngine.google
+            let searchEngine = BrowserEngine.SearchEngine.duckDuckGo
             let encodedQuery = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
             urlToLoad = URL(string: searchEngine.searchURL.absoluteString + encodedQuery)
         }
@@ -455,7 +588,7 @@ private class TabManager: ObservableObject {
         currentTab = tab
         
         // Load homepage
-        if let url = URL(string: "https://www.google.com") {
+        if let url = URL(string: "about:blank") {
             tab.loadURL(url)
         }
     }

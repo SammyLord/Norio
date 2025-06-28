@@ -97,7 +97,6 @@ public struct NorioMac: App {
             BrowserView()
                 .frame(minWidth: 800, minHeight: 600)
         }
-        .windowStyle(HiddenTitleBarWindowStyle())
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Tab") {
@@ -132,6 +131,39 @@ class MacAppDelegate: NSObject, NSApplicationDelegate {
         setupExtensionSystem()
         initializeContentBlocker()
         setupExtensionMenu()
+        
+        // Force the app to the front immediately on launch
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        
+        // Delay to ensure window is ready, then force focus
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let window = NSApp.windows.first {
+                window.orderFrontRegardless()
+                window.makeKeyAndOrderFront(nil)
+                window.makeMain()
+                
+                // Find the first text field and make it first responder
+                if let contentView = window.contentView {
+                    self.makeFirstTextFieldResponder(in: contentView)
+                }
+            }
+        }
+    }
+    
+    func applicationDidBecomeActive(_ notification: Notification) {
+        // Bring the app to the front and make its window key
+        NSApp.activate(ignoringOtherApps: true)
+
+        // This brings the window to the front and makes it key.
+        // Dispatching to the main queue gives the window time to be ready.
+        DispatchQueue.main.async {
+            if let window = NSApp.windows.first {
+                window.makeKeyAndOrderFront(nil)
+                // Force the window to accept first responder
+                window.makeFirstResponder(window.contentView)
+            }
+        }
     }
     
     private func setupExtensionSystem() {
@@ -191,6 +223,18 @@ class MacAppDelegate: NSObject, NSApplicationDelegate {
     
     @objc func manageExtensions() {
         NotificationCenter.default.post(name: NSNotification.Name("ShowExtensions"), object: nil)
+    }
+    
+    // Helper method to recursively find and focus the first text field
+    private func makeFirstTextFieldResponder(in view: NSView) {
+        for subview in view.subviews {
+            if let textField = subview as? NSTextField, textField.isEditable {
+                textField.window?.makeFirstResponder(textField)
+                return
+            } else {
+                makeFirstTextFieldResponder(in: subview)
+            }
+        }
     }
     
     @objc func runExtension(_ sender: NSMenuItem) {

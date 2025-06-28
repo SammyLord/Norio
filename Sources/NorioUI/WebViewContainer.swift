@@ -21,6 +21,11 @@ struct WebViewContainer: NSViewRepresentable {
         // Apply extensions to this WebView
         ExtensionManager.shared.applyExtensionsToWebView(webView)
         
+        // Ensure the WebView can accept first responder
+        DispatchQueue.main.async {
+            webView.window?.makeFirstResponder(webView)
+        }
+        
         return webView
     }
     

@@ -78,7 +78,7 @@ public class BrowserEngine {
 // Tab management
 public extension BrowserEngine {
     // Tab model
-    class Tab: Identifiable {
+    class Tab: Identifiable, Equatable {
         public let id: UUID
         public let webView: WKWebView
         public var title: String = ""
@@ -92,8 +92,12 @@ public extension BrowserEngine {
         }
         
         public func loadURL(_ url: URL) {
-            let request = URLRequest(url: url)
-            webView.load(request)
+            if url.absoluteString == "about:blank" {
+                webView.loadHTMLString("", baseURL: nil)
+            } else {
+                let request = URLRequest(url: url)
+                webView.load(request)
+            }
             self.url = url
         }
         
@@ -123,6 +127,10 @@ public extension BrowserEngine {
         
         public func stopLoading() {
             webView.stopLoading()
+        }
+        
+        public static func == (lhs: BrowserEngine.Tab, rhs: BrowserEngine.Tab) -> Bool {
+            lhs.id == rhs.id
         }
     }
 }
@@ -168,8 +176,8 @@ public extension BrowserEngine {
         public var clearHistoryOnExit: Bool
         
         public init(
-            homepage: URL = URL(string: "https://www.google.com")!,
-            searchEngine: SearchEngine = .google,
+            homepage: URL = URL(string: "about:blank")!,
+            searchEngine: SearchEngine = .duckDuckGo,
             blockPopups: Bool = true,
             enableDoNotTrack: Bool = true,
             blockCookies: Bool = false,
