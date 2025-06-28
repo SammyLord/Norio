@@ -50,8 +50,11 @@ struct WebViewContainer: NSViewRepresentable {
     func updateNSView(_ nsView: WKWebView, context: Context) {
         // Update the URL status when the tab changes
         if let url = tab?.url {
-            statusUrl = url.host ?? ""
-            isLoading = tab?.isLoading ?? false
+            // Defer state updates to avoid modifying state during view update
+            DispatchQueue.main.async {
+                self.statusUrl = url.host ?? ""
+                self.isLoading = self.tab?.isLoading ?? false
+            }
         }
     }
     
@@ -155,8 +158,11 @@ struct WebViewContainer: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {
         // Update the URL status when the tab changes
         if let url = tab?.url {
-            statusUrl = url.host ?? ""
-            isLoading = tab?.isLoading ?? false
+            // Defer state updates to avoid modifying state during view update
+            DispatchQueue.main.async {
+                self.statusUrl = url.host ?? ""
+                self.isLoading = self.tab?.isLoading ?? false
+            }
         }
     }
     
