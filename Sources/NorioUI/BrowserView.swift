@@ -327,16 +327,19 @@ public struct BrowserView: View {
         
         var urlToLoad: URL?
         
-        // Check if it's a valid URL
+        // Check if it's a valid URL with scheme
         if let url = URL(string: urlString), url.scheme != nil {
             urlToLoad = url
         }
-        // Check if it's a domain without scheme
-        else if let url = URL(string: "https://" + urlString) {
-            urlToLoad = url
+        // Check if it looks like a domain (contains a dot and no spaces)
+        else if urlString.contains(".") && !urlString.contains(" ") && !urlString.contains("\t") {
+            if let url = URL(string: "https://" + urlString) {
+                urlToLoad = url
+            }
         }
-        // Treat as search query
-        else {
+        
+        // If we don't have a URL yet, treat as search query
+        if urlToLoad == nil {
             let searchEngine = BrowserEngine.SearchEngine.duckDuckGo
             let encodedQuery = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
             urlToLoad = URL(string: searchEngine.searchURL.absoluteString + encodedQuery)
