@@ -517,26 +517,33 @@ private struct BrowserWebViewContainer: View {
     
     @State private var statusUrl: String = ""
     @State private var isLoading: Bool = false
+    @State private var title: String = ""
     
     var body: some View {
         WebViewContainer(
             tab: tab,
             statusUrl: $statusUrl,
-            isLoading: $isLoading
+            isLoading: $isLoading,
+            title: $title
         )
         .onAppear {
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, tab.isLoading)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, tab.isLoading)
             }
         }
         .onChange(of: statusUrl) { newValue in
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, isLoading)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, isLoading)
             }
         }
         .onChange(of: isLoading) { newValue in
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, newValue)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, newValue)
+            }
+        }
+        .onChange(of: title) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, newValue.isEmpty ? tab.title : newValue, url, isLoading)
             }
         }
     }
@@ -549,26 +556,33 @@ private struct BrowserWebViewContainer: View {
     
     @State private var statusUrl: String = ""
     @State private var isLoading: Bool = false
+    @State private var title: String = ""
     
     var body: some View {
         WebViewContainer(
             tab: tab,
             statusUrl: $statusUrl,
-            isLoading: $isLoading
+            isLoading: $isLoading,
+            title: $title
         )
         .onAppear {
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, tab.isLoading)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, tab.isLoading)
             }
         }
         .onChange(of: statusUrl) { newValue in
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, isLoading)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, isLoading)
             }
         }
         .onChange(of: isLoading) { newValue in
             if let tab = tab, let url = tab.url {
-                onUpdate(tab, tab.title, url, newValue)
+                onUpdate(tab, title.isEmpty ? tab.title : title, url, newValue)
+            }
+        }
+        .onChange(of: title) { newValue in
+            if let tab = tab, let url = tab.url {
+                onUpdate(tab, newValue.isEmpty ? tab.title : newValue, url, isLoading)
             }
         }
     }

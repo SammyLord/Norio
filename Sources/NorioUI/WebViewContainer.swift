@@ -8,6 +8,7 @@ struct WebViewContainer: NSViewRepresentable {
     var tab: BrowserEngine.Tab?
     @Binding var statusUrl: String
     @Binding var isLoading: Bool
+    @Binding var title: String
     var onNavigationAction: ((URL) -> Bool)?
     
     func makeNSView(context: Context) -> WKWebView {
@@ -77,6 +78,9 @@ struct WebViewContainer: NSViewRepresentable {
             if let url = webView.url {
                 parent.statusUrl = url.host ?? ""
             }
+            
+            // Extract and update the page title
+            parent.title = webView.title ?? ""
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -129,6 +133,7 @@ struct WebViewContainer: UIViewRepresentable {
     var tab: BrowserEngine.Tab?
     @Binding var statusUrl: String
     @Binding var isLoading: Bool
+    @Binding var title: String
     var onNavigationAction: ((URL) -> Bool)?
     
     func makeUIView(context: Context) -> WKWebView {
@@ -178,6 +183,9 @@ struct WebViewContainer: UIViewRepresentable {
             if let url = webView.url {
                 parent.statusUrl = url.host ?? ""
             }
+            
+            // Extract and update the page title
+            parent.title = webView.title ?? ""
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
