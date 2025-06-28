@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norio Pointer Lock Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        canvas {
+            border: 2px solid #4CAF50;
+            background: #2d2d2d;
+            cursor: crosshair;
+        }
+        
+        .info {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status.unlocked {
+            background: #f44336;
+            color: white;
+        }
+        
+        .status.locked {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .log {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 20px 0;
+        }
+        
+        .movement-display {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .movement-values {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Norio Pointer Lock Test</h1>
+        
+        <div class="info">
+            <h3>Instructions:</h3>
+            <p>1. Click the "Request Pointer Lock" button or click directly on the canvas</p>
+            <p>2. Move your mouse to see movement data</p>
+            <p>3. Press ESC to exit pointer lock</p>
+            <p>4. Check the console for detailed debugging information</p>
+        </div>
+        
+        <div id="status" class="status unlocked">
+            Status: Pointer Unlocked
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="lockButton">Request Pointer Lock</button>
+            <button id="lockWithOptionsButton">Request with unadjustedMovement</button>
+            <button id="exitButton" disabled>Exit Pointer Lock</button>
+            <button id="clearLogButton">Clear Log</button>
+        </div>
+        
+        <div class="movement-display">
+            <h3>Mouse Movement Data</h3>
+            <div class="movement-values">
+                X: <span id="movementX">0</span> | Y: <span id="movementY">0</span>
+            </div>
+            <p>Total movements: <span id="movementCount">0</span></p>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+        const lockButton = document.getElementById('lockButton');
+        const lockWithOptionsButton = document.getElementById('lockWithOptionsButton');
+        const exitButton = document.getElementById('exitButton');
+        const clearLogButton = document.getElementById('clearLogButton');
+        const logDiv = document.getElementById('log');
+        const movementXSpan = document.getElementById('movementX');
+        const movementYSpan = document.getElementById('movementY');
+        const movementCountSpan = document.getElementById('movementCount');
+        
+        let movementCount = 0;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`Norio Test: ${message}`);
+        }
+        
+        function updateStatus() {
+            if (document.pointerLockElement === canvas) {
+                status.textContent = 'Status: Pointer Locked';
+                status.className = 'status locked';
+                lockButton.disabled = true;
+                lockWithOptionsButton.disabled = true;
+                exitButton.disabled = false;
+            } else {
+                status.textContent = 'Status: Pointer Unlocked';
+                status.className = 'status unlocked';
+                lockButton.disabled = false;
+                lockWithOptionsButton.disabled = false;
+                exitButton.disabled = true;
+            }
+        }
+        
+        function drawCanvas() {
+            // Clear canvas
+            ctx.fillStyle = '#2d2d2d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw crosshair
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Draw ball
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, 10, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw instructions
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Click to request pointer lock', canvas.width / 2, 30);
+            ctx.fillText('Move mouse to control the ball', canvas.width / 2, 50);
+        }
+        
+        // Event listeners
+        document.addEventListener('pointerlockchange', function() {
+            updateStatus();
+            if (document.pointerLockElement === canvas) {
+                log('Pointer lock activated successfully');
+            } else {
+                log('Pointer lock deactivated');
+            }
+        });
+        
+        document.addEventListener('pointerlockerror', function(event) {
+            log('Pointer lock error occurred: ' + event.type);
+            updateStatus();
+        });
+        
+        document.addEventListener('mousemove', function(event) {
+            if (document.pointerLockElement === canvas) {
+                const movementX = event.movementX || 0;
+                const movementY = event.movementY || 0;
+                
+                // Update movement display
+                movementXSpan.textContent = movementX;
+                movementYSpan.textContent = movementY;
+                movementCount++;
+                movementCountSpan.textContent = movementCount;
+                
+                // Move ball
+                ballX += movementX * 0.5;
+                ballY += movementY * 0.5;
+                
+                // Keep ball within canvas bounds
+                ballX = Math.max(10, Math.min(canvas.width - 10, ballX));
+                ballY = Math.max(10, Math.min(canvas.height - 10, ballY));
+                
+                drawCanvas();
+                
+                if (movementX !== 0 || movementY !== 0) {
+                    log(`Mouse movement: X=${movementX}, Y=${movementY}`);
+                }
+            }
+        });
+        
+        canvas.addEventListener('click', async function() {
+            if (!document.pointerLockElement) {
+                log('Canvas clicked - requesting pointer lock');
+                try {
+                    await canvas.requestPointerLock();
+                } catch (error) {
+                    log('Pointer lock request failed: ' + error.message);
+                }
+            }
+        });
+        
+        lockButton.addEventListener('click', async function() {
+            log('Manual pointer lock request');
+            try {
+                await canvas.requestPointerLock();
+            } catch (error) {
+                log('Pointer lock request failed: ' + error.message);
+            }
+        });
+        
+        lockWithOptionsButton.addEventListener('click', async function() {
+            log('Pointer lock request with unadjustedMovement=true');
+            try {
+                await canvas.requestPointerLock({ unadjustedMovement: true });
+            } catch (error) {
+                log('Pointer lock with options failed: ' + error.message);
+                // Fallback to regular pointer lock
+                try {
+                    await canvas.requestPointerLock();
+                    log('Fallback to regular pointer lock succeeded');
+                } catch (fallbackError) {
+                    log('Fallback pointer lock also failed: ' + fallbackError.message);
+                }
+            }
+        });
+        
+        exitButton.addEventListener('click', function() {
+            log('Manual exit pointer lock');
+            document.exitPointerLock();
+        });
+        
+        clearLogButton.addEventListener('click', function() {
+            logDiv.innerHTML = '';
+            movementCount = 0;
+            movementCountSpan.textContent = '0';
+            log('Log cleared');
+        });
+        
+        // Listen for Norio-specific events
+        window.addEventListener('norioPointerLockReady', function() {
+            log('Norio pointer lock enhancement script is ready!');
+        });
+        
+        // Initialize
+        updateStatus();
+        drawCanvas();
+        log('Pointer lock test initialized');
+        log('Browser: ' + navigator.userAgent);
+        log('Pointer lock supported: ' + ('requestPointerLock' in Element.prototype));
+    </script>
+</body>
+</html> 

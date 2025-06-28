@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Pointer Lock Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #333; color: white; }
+        #testCanvas { border: 2px solid #0f0; background: #111; cursor: crosshair; }
+        button { padding: 10px; margin: 10px; background: #0f0; color: #000; border: none; cursor: pointer; }
+        .status { padding: 10px; background: #222; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Simple Pointer Lock Test</h1>
+    <div class="status" id="status">Click canvas or button to test pointer lock</div>
+    <canvas id="testCanvas" width="400" height="300"></canvas><br>
+    <button onclick="requestLock()">Request Pointer Lock</button>
+    <button onclick="runDebug()">Run Debug</button>
+    
+    <script>
+        const canvas = document.getElementById('testCanvas');
+        const status = document.getElementById('status');
+        
+        function updateStatus(msg) {
+            status.textContent = msg;
+            console.log('Status:', msg);
+        }
+        
+        function requestLock() {
+            console.log('Manual pointer lock request triggered');
+            canvas.requestPointerLock().catch(err => {
+                console.error('Manual request failed:', err);
+                updateStatus('Request failed: ' + err.message);
+            });
+        }
+        
+        function runDebug() {
+            if (window.norioPointerLockDebug) {
+                window.norioPointerLockDebug();
+            } else {
+                console.log('Debug function not available');
+            }
+        }
+        
+        canvas.addEventListener('click', function() {
+            console.log('Canvas clicked, requesting pointer lock');
+            updateStatus('Canvas clicked - requesting pointer lock...');
+        });
+        
+        document.addEventListener('pointerlockchange', function() {
+            if (document.pointerLockElement) {
+                updateStatus('✅ Pointer lock active! Move mouse to test.');
+            } else {
+                updateStatus('❌ Pointer lock deactivated');
+            }
+        });
+        
+        document.addEventListener('pointerlockerror', function() {
+            updateStatus('❌ Pointer lock error occurred');
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (document.pointerLockElement) {
+                console.log('Movement:', e.movementX, e.movementY);
+            }
+        });
+        
+        window.addEventListener('norioPointerLockReady', function(e) {
+            updateStatus('Norio enhancement ready - API available: ' + e.detail.apiAvailable);
+        });
+        
+        updateStatus('Test page loaded. Check console for detailed logs.');
+    </script>
+</body>
+</html> 

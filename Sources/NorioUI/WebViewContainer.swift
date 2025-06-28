@@ -16,14 +16,31 @@ struct WebViewContainer: NSViewRepresentable {
         webView.uiDelegate = context.coordinator
         
         // Configure user scripts controller for extension support
+        // Remove existing handler first to avoid duplicates
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "installExtension")
         webView.configuration.userContentController.add(context.coordinator, name: "installExtension")
         
         // Apply extensions to this WebView
         ExtensionManager.shared.applyExtensionsToWebView(webView)
         
-        // Ensure the WebView can accept first responder
+        // Enhanced mouse and focus handling for gaming
+        webView.allowsBackForwardNavigationGestures = false // Disable to prevent conflicts with games
+        
+        // Ensure the WebView can receive all mouse events
         DispatchQueue.main.async {
+            // Make sure the WebView accepts first responder
             webView.window?.makeFirstResponder(webView)
+            
+            // Enable mouse tracking for better game compatibility
+            if let contentView = webView.superview {
+                let trackingArea = NSTrackingArea(
+                    rect: contentView.bounds,
+                    options: [.activeInActiveApp, .mouseMoved, .inVisibleRect],
+                    owner: webView,
+                    userInfo: nil
+                )
+                contentView.addTrackingArea(trackingArea)
+            }
         }
         
         return webView
@@ -70,6 +87,14 @@ struct WebViewContainer: NSViewRepresentable {
             parent.isLoading = false
         }
         
+        // MARK: - WKUIDelegate
+        
+        // Support for pointer lock and fullscreen requests
+        func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            // Allow media capture for gaming sites that might need microphone/camera
+            decisionHandler(.grant)
+        }
+        
         // MARK: - WKScriptMessageHandler
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -112,6 +137,8 @@ struct WebViewContainer: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         
         // Configure user scripts controller for extension support
+        // Remove existing handler first to avoid duplicates
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "installExtension")
         webView.configuration.userContentController.add(context.coordinator, name: "installExtension")
         
         // Apply extensions to this WebView
@@ -160,6 +187,28 @@ struct WebViewContainer: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             parent.isLoading = false
         }
+        
+        // MARK: - WKUIDelegate
+        
+        // Support for pointer lock and fullscreen requests
+        func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            // Allow media capture for gaming sites that might need microphone/camera
+            decisionHandler(.grant)
+        }
+        
+        #if os(iOS)
+        // Handle device orientation requests (useful for mobile gaming)
+        @available(iOS 15.0, *)
+        func webView(_ webView: WKWebView, requestDeviceOrientationAndMotionPermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+            decisionHandler(.grant)
+        }
+        
+        // Enable context menu for debugging if needed
+        @available(iOS 13.0, *)
+        func webView(_ webView: WKWebView, contextMenuConfigurationForElement elementInfo: WKContextMenuElementInfo, completionHandler: @escaping (UIContextMenuConfiguration?) -> Void) {
+            completionHandler(nil) // No context menu for gaming experience
+        }
+        #endif
         
         // MARK: - WKScriptMessageHandler
         

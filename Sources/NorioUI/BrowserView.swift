@@ -275,6 +275,7 @@ public struct BrowserView: View {
                     }
                 }
             }
+            .id(tabManager.currentTab?.id ?? UUID())  // Force recreation when tab changes
             .accessibilityIdentifier("webViewContainer")
             
             // Status bar

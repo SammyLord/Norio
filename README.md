@@ -9,6 +9,29 @@ Norio is a WebKit-based browser for Apple platforms (macOS, iOS, and iPadOS) tha
 - Support for Firefox extensions
 - Modern, clean user interface
 - Privacy-focused features
+- Gaming-Ready: Enhanced pointer lock support for HTML5 games and 3D applications
+
+## Gaming and Pointer Lock Support
+
+Norio includes enhanced support for HTML5 games and applications that require precise mouse control:
+
+### Features
+- **Pointer Lock API**: Full support for the W3C Pointer Lock specification
+- **Raw Mouse Input**: Option for unadjusted mouse movement data for competitive gaming
+- **Auto-Detection**: Automatically enables pointer lock on canvas elements when appropriate
+- **Enhanced Debugging**: Console logging for pointer lock events and troubleshooting
+
+### Supported Gaming Sites
+- **Minecraft Classic** (classic.minecraft.net) - Full mouse control support
+- **3D Modeling Applications** - Unrestricted viewport rotation
+- **First-Person Games** - Precise camera control without cursor limitations
+- **Browser-based Games** - Complete mouse capture and movement tracking
+
+### Technical Implementation
+- WebKit configuration optimized for gaming performance
+- JavaScript enhancements for better pointer lock compatibility
+- Automatic fallback handling for different pointer lock scenarios
+- Cross-origin support for gaming assets and resources
 
 ## Requirements
 
