@@ -235,59 +235,48 @@ fileprivate struct ExtensionDropdownButton: View {
     var onManageExtensions: () -> Void
     
     var body: some View {
-        VStack {
-            Button(action: {
-                self.showDropdown.toggle()
-            }) {
-                Image(systemName: "puzzlepiece.extension")
-                    .font(.system(size: 16))
-                    .foregroundColor(.primary)
-                    .padding(8)
-                    #if os(iOS)
-                    .background(Color(.systemBackground))
-                    #else
-                    .background(Color(.windowBackgroundColor))
-                    #endif
-                    .clipShape(Circle())
-            }
-            
-            if showDropdown {
-                VStack(alignment: .leading, spacing: 8) {
+        Button(action: {
+            self.showDropdown.toggle()
+        }) {
+            Image(systemName: "puzzlepiece.extension")
+                .font(.system(size: 16))
+                .foregroundColor(.primary)
+                .padding(8)
+                #if os(iOS)
+                .background(Color(.systemBackground))
+                #else
+                .background(Color(.windowBackgroundColor))
+                #endif
+                .clipShape(Circle())
+        }
+        .popover(isPresented: $showDropdown, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 8) {
+                if extensions.isEmpty {
+                    Text("No extensions installed.")
+                        .foregroundColor(.gray)
+                } else {
                     ForEach(extensions, id: \.id) { extensionItem in
                         ExtensionDropdownItem(extensionItem: extensionItem) {
                             self.onExtensionAction(extensionItem)
                             self.showDropdown = false
                         }
                     }
-                    
-                    Divider()
-                    
-                    Button(action: {
-                        self.onManageExtensions()
-                        self.showDropdown = false
-                    }) {
-                        Text("Manage Extensions")
-                            .font(.system(size: 14))
-                            .foregroundColor(.primary)
-                            .padding(.vertical, 4)
-                    }
                 }
-                .padding(8)
-                .background(Color.secondaryBackground)
-                .cornerRadius(8)
-                .shadow(radius: 2)
-                .offset(y: 8)
+                
+                Divider()
+                
+                Button(action: {
+                    self.onManageExtensions()
+                    self.showDropdown = false
+                }) {
+                    Text("Manage Extensions")
+                        .font(.system(size: 14))
+                        .foregroundColor(.primary)
+                }
             }
+            .padding(8)
+            .frame(minWidth: 200)
         }
-        .onAppear {
-            self.setupTapHandler()
-        }
-    }
-    
-    func setupTapHandler() {
-        #if os(iOS)
-        TapHandlerHelper.shared.setup(for: _showDropdown)
-        #endif
     }
 }
 
