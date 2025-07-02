@@ -767,10 +767,59 @@ private struct SearchEngineSettingsView: View {
 }
 
 // Default Browser Settings
+private class DefaultBrowserSettingsViewModel: ObservableObject {
+    @Published var isDefault: Bool = false
+
+    init() {
+        checkIfDefault()
+        
+        #if os(iOS)
+        NotificationCenter.default.addObserver(self, selector: #selector(checkIfDefault), name: UIApplication.willEnterForegroundNotification, object: nil)
+        #else
+        NotificationCenter.default.addObserver(self, selector: #selector(checkIfDefault), name: NSApplication.willBecomeActiveNotification, object: nil)
+        #endif
+    }
+    
+    @objc func checkIfDefault() {
+        self.isDefault = DefaultBrowserManager.shared.isDefaultBrowser()
+    }
+}
+
 private struct DefaultBrowserSettingsView: View {
+    @StateObject private var viewModel = DefaultBrowserSettingsViewModel()
+
     var body: some View {
-        Text("Not yet implemented.")
-            .navigationTitle("Default Browser")
+        Form {
+            Section {
+                #if os(macOS)
+                if viewModel.isDefault {
+                    HStack {
+                        Text("Norio is currently your default browser.")
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    }
+                } else {
+                    Text("Norio is not your default browser.")
+                    Button("Open System Settings") {
+                        DefaultBrowserManager.shared.openDefaultBrowserSettings()
+                    }
+                }
+                #else // iOS
+                Text("You can change your default browser in the Settings app.")
+                Button("Open Settings") {
+                    DefaultBrowserManager.shared.openDefaultBrowserSettings()
+                }
+                #endif
+            } footer: {
+                #if os(macOS)
+                Text("To set Norio as your default browser, select it from the list in System Settings.")
+                #else
+                Text("In Settings, go to Norio and tap 'Default Browser App'.")
+                #endif
+            }
+        }
+        .navigationTitle("Default Browser")
     }
 }
 
