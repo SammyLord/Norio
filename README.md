@@ -16,6 +16,14 @@ Norio is a WebKit-based browser for Apple platforms (macOS, iOS, and iPadOS) tha
 - Automatic fallback handling for different pointer lock scenarios
 - Cross-origin support for gaming assets and resources
 
+## Screenshots
+
+### Main Browser Window
+![Main Browser Window](norio-ss-website.png)
+
+### Settings Area
+![Settings Area](norio-ss-settings.png)
+
 ## Requirements
 
 - Xcode 15.0+
