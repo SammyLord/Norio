@@ -26,10 +26,10 @@ Norio is a WebKit-based browser for Apple platforms (macOS, iOS, and iPadOS) tha
 
 ## Requirements
 
-- Xcode 15.0+
+- Xcode 26.0+
 - Swift 5.9+
-- macOS 14.0+ (for development)
-- macOS 13.0+, iOS 17.0+, iPadOS 17.0+ (for deployment)
+- macOS 26.0+ (for development)
+- macOS 14.0+, iOS 26.0+, iPadOS 26.0+ (for deployment)
 
 ## Architecture
 
