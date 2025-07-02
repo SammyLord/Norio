@@ -295,6 +295,7 @@ public struct BrowserView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .frame(minWidth: 400, idealWidth: 500, maxWidth: .infinity, minHeight: 300, idealHeight: 400, maxHeight: .infinity)
         }
         .sheet(isPresented: $showExtensions) {
             ExtensionsView()
@@ -645,6 +646,7 @@ private class TabManager: ObservableObject {
 
 // Settings View
 private struct SettingsView: View {
+    @Environment(\.presentationMode) var presentationMode
     @State private var showContentBlockingSettings = false
     @State private var contentBlockingEnabled = BrowserEngine.shared.contentBlockingEnabled
     
@@ -654,12 +656,18 @@ private struct SettingsView: View {
             List {
                 // General settings
                 Section(header: Text("General")) {
-                    Text("Homepage")
-                        .accessibilityIdentifier("homepageSetting")
-                    Text("Search Engine")
-                        .accessibilityIdentifier("searchEngineSetting")
-                    Text("Default Browser")
-                        .accessibilityIdentifier("defaultBrowserSetting")
+                    NavigationLink(destination: HomepageSettingsView()) {
+                        Text("Homepage")
+                    }
+                    .accessibilityIdentifier("homepageSetting")
+                    NavigationLink(destination: SearchEngineSettingsView()) {
+                        Text("Search Engine")
+                    }
+                    .accessibilityIdentifier("searchEngineSetting")
+                    NavigationLink(destination: DefaultBrowserSettingsView()) {
+                        Text("Default Browser")
+                    }
+                    .accessibilityIdentifier("defaultBrowserSetting")
                 }
                 
                 // Privacy settings
@@ -675,12 +683,18 @@ private struct SettingsView: View {
                     }
                     .accessibilityIdentifier("contentBlockingSettingsLink")
                     
-                    Text("Block Cookies")
-                        .accessibilityIdentifier("blockCookiesSetting")
-                    Text("Do Not Track")
-                        .accessibilityIdentifier("doNotTrackSetting")
-                    Text("Clear Browsing Data")
-                        .accessibilityIdentifier("clearBrowsingDataSetting")
+                    NavigationLink(destination: CookieSettingsView()) {
+                        Text("Block Cookies")
+                    }
+                    .accessibilityIdentifier("blockCookiesSetting")
+                    NavigationLink(destination: TrackingSettingsView()) {
+                        Text("Do Not Track")
+                    }
+                    .accessibilityIdentifier("doNotTrackSetting")
+                    NavigationLink(destination: ClearDataSettingsView()) {
+                        Text("Clear Browsing Data")
+                    }
+                    .accessibilityIdentifier("clearBrowsingDataSetting")
                 }
                 
                 // About section
@@ -695,8 +709,104 @@ private struct SettingsView: View {
             .listStyle(DefaultListStyle())
             #endif
             .navigationTitle("Settings")
+            .toolbar {
+                #if os(macOS)
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                #else
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+                #endif
+            }
             .accessibilityIdentifier("settingsScreen")
         }
+    }
+}
+
+// Homepage Settings
+private struct HomepageSettingsView: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+    @State private var homepageUrl: String = ""
+
+    var body: some View {
+        Form {
+            TextField("Homepage URL", text: $homepageUrl)
+                .onAppear {
+                    self.homepageUrl = settingsManager.settings.homepage.absoluteString
+                }
+                .onChange(of: homepageUrl) { newValue in
+                    if let url = URL(string: newValue) {
+                        settingsManager.settings.homepage = url
+                    }
+                }
+        }
+        .navigationTitle("Homepage")
+    }
+}
+
+// Search Engine Settings
+private struct SearchEngineSettingsView: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+
+    var body: some View {
+        Form {
+            Picker("Search Engine", selection: $settingsManager.settings.searchEngine) {
+                ForEach(BrowserEngine.SearchEngine.allCases, id: \.self) { engine in
+                    Text(engine.rawValue.capitalized).tag(engine)
+                }
+            }
+        }
+        .navigationTitle("Search Engine")
+    }
+}
+
+// Default Browser Settings
+private struct DefaultBrowserSettingsView: View {
+    var body: some View {
+        Text("Not yet implemented.")
+            .navigationTitle("Default Browser")
+    }
+}
+
+// Cookie Settings
+private struct CookieSettingsView: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+
+    var body: some View {
+        Form {
+            Toggle("Block Cookies", isOn: $settingsManager.settings.blockCookies)
+        }
+        .navigationTitle("Block Cookies")
+    }
+}
+
+// Do Not Track Settings
+private struct TrackingSettingsView: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+
+    var body: some View {
+        Form {
+            Toggle("Enable 'Do Not Track'", isOn: $settingsManager.settings.enableDoNotTrack)
+        }
+        .navigationTitle("Do Not Track")
+    }
+}
+
+// Clear Browsing Data Settings
+private struct ClearDataSettingsView: View {
+    @StateObject private var settingsManager = SettingsManager.shared
+
+    var body: some View {
+        Form {
+            Toggle("Clear History on Exit", isOn: $settingsManager.settings.clearHistoryOnExit)
+        }
+        .navigationTitle("Clear Browsing Data")
     }
 }
 
@@ -810,7 +920,7 @@ private struct BlockListRow: View {
     init(blockList: ContentBlocker.BlockList, onToggle: @escaping () -> Void) {
         self.blockList = blockList
         self.onToggle = onToggle
-        self._isEnabled = State(initialValue: blockList.isEnabled)
+        self.isEnabled = blockList.isEnabled
     }
     
     var body: some View {
@@ -1126,7 +1236,7 @@ private struct ExtensionListItem: View {
     init(extensionItem: ExtensionManager.Extension, onUpdate: @escaping () -> Void) {
         self.extensionItem = extensionItem
         self.onUpdate = onUpdate
-        self._isEnabled = State(initialValue: extensionItem.enabled)
+        self.isEnabled = extensionItem.enabled
     }
     
     var body: some View {
